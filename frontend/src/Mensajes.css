@@ -1,0 +1,192 @@
+/* Sidebar styling */
+.sidebar {
+    height: 100vh;
+    background-color: #1a1a2e;
+    transition: all 0.3s ease-in-out;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.sidebar .navbar-brand {
+    font-size: 24px;
+    font-weight: bold;
+    color: #e94560;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar .nav-link {
+    color: #fff;
+    font-size: 16px;
+    padding: 10px 20px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    transition: background 0.3s, color 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #e94560;
+    color: #fff;
+}
+
+/* Contactos container styling */
+.contactos-container {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Main chat container styling for the Messages view */
+.main-chat-container {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Chat messages area */
+.chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.chat-message {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    max-width: 80%;
+    font-size: 14px;
+}
+
+.chat-message.sent {
+    background-color: #d1e7dd;
+    align-self: flex-end;
+}
+
+.chat-message.received {
+    background-color: #f8d7da;
+    align-self: flex-start;
+}
+
+/* Input container */
+.chat-input-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.send-button {
+    background-color: #1a73e8;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.send-button:hover {
+    background-color: #0057b7;
+    transform: translateY(-2px);
+}
+
+/* General Buttons Styling */
+button {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #e94560;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: #ff5a5f;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Botones secundarios */
+button.btn-secondary {
+    background-color: #1a1a2e;
+    color: #e94560;
+}
+
+button.btn-secondary:hover {
+    background-color: #292945;
+    color: #fff;
+}
+
+/* Buttons in modals */
+.modal button {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 16px;
+}
+
+/* Botones de acción en lista */
+.list-group-item button {
+    font-size: 14px;
+    padding: 6px 12px;
+    background-color: #f1f1f1;
+    color: #1a1a2e;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.list-group-item button:hover {
+    background-color: #e94560;
+    color: #fff;
+    border-color: #e94560;
+}
+
+/* Modal Close Button */
+.modal .close {
+    font-size: 18px;
+    color: #e94560;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.modal .close:hover {
+    color: #ff5a5f;
+    transform: scale(1.2);
+}
+
+/* Footer logo container */
+.footer-img-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 40px;
+    padding: 20px 0;
+    background-color: #f8f9fa;
+}
+
+/* Footer logo image styling */
+.footer-img {
+    max-width: 100%;
+    height: auto;
+    max-height: 150px;
+    object-fit: contain;
+}

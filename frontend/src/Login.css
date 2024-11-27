@@ -1,0 +1,110 @@
+/* General container styling for the login */
+html, body {
+  height: 100%; /* Asegúrate de que el html y el body ocupen toda la altura */
+  margin: 0; /* Eliminar márgenes por defecto */
+}
+
+.login-container {
+  min-height: 100vh; /* Asegúrate de que el contenedor tenga al menos la altura de la ventana */
+  background: linear-gradient(135deg, #e0eafc, #cfdef3); /* Fondo degradado más suave */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Card styling */
+.login-card {
+  padding: 40px;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15); /* Sombra más suave y amplia */
+  background-color: #ffffff; /* Fondo blanco para el contenedor */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Animación de elevación */
+}
+
+.login-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada al pasar el mouse */
+}
+
+/* Logo styling */
+.logo-img {
+  max-width: 150px; /* Tamaño del logo ajustado */
+  height: auto;
+  margin-bottom: 25px;
+}
+
+/* Heading styling */
+.login-card h2 {
+  color: #2c3e50; /* Color de texto más oscuro */
+  font-weight: 700; /* Peso de fuente más fuerte */
+  font-size: 1.75rem; /* Tamaño de fuente más grande */
+  text-align: center; /* Centrar el título */
+}
+
+/* Input styling */
+.login-card .form-control {
+  border-radius: 10px;
+  border: 1px solid #ced4da;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  padding: 10px; /* Espaciado interno */
+}
+
+.login-card .form-control:focus {
+  border-color: #3498db; /* Color azul más atractivo al enfocar */
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+}
+
+/* Button styling */
+button[type="submit"] {
+  background-color: #3498db; /* Color azul */
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 10px 20px; /* Espaciado interno */
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+  cursor: pointer; /* Cambiar el cursor al pasar el mouse */
+}
+
+button[type="submit"]:hover {
+  background-color: #2980b9; /* Color más oscuro al pasar el mouse */
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(41, 128, 185, 0.3); /* Sombra en hover */
+}
+
+button[type="submit"]:active {
+  background-color: #1c5980; /* Color aún más oscuro al hacer clic */
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Link styling */
+.custom-link {
+  color: #3498db; /* Color azul */
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.custom-link:hover {
+  color: #2980b9; /* Color más oscuro al pasar el mouse */
+  text-decoration: underline;
+}
+
+/* Message and error styling */
+.text-success {
+  color: #28a745; /* Verde para mensajes de éxito */
+  font-weight: 500;
+}
+
+.text-danger {
+  color: #e74c3c; /* Rojo para mensajes de error */
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+/* Add padding between form groups */
+.login-card .form-group {
+  margin-bottom: 1.5rem;
+}

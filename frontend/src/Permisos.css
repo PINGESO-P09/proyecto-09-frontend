@@ -1,0 +1,125 @@
+/* Sidebar styling */
+.sidebar {
+    height: 100vh;
+    background-color: #1a1a2e;
+    transition: all 0.3s ease-in-out;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.sidebar .navbar-brand {
+    font-size: 24px;
+    font-weight: bold;
+    color: #e94560;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Logo styling */
+.logo-img {
+    width: 120px; /* Tamaño del logo */
+    height: auto;
+    margin-bottom: 15px;
+    border-radius: 8px; /* Opcional: bordes redondeados */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.sidebar .nav-link {
+    color: #fff;
+    font-size: 16px;
+    padding: 10px 20px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    transition: background 0.3s, color 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #e94560;
+    color: #fff;
+}
+
+.sidebar .nav-link i {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+/* Sidebar hidden */
+.sidebar-hidden {
+    width: 0;
+    overflow: hidden;
+}
+
+/* Main content adjustment when sidebar is visible/hidden */
+.main-content {
+    margin-left: 250px; /* Deja espacio para el sidebar */
+    width: calc(100% - 250px);
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease-in-out;
+    padding: 20px;
+    min-height: 100vh;
+    overflow-y: auto; /* Permite el scroll en el contenido principal */
+}
+
+.main-content-expanded {
+    margin-left: 0;
+    width: 100%;
+}
+
+/* Footer image container styling */
+.footer-img-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    background-color: #f8f9fa;
+    overflow: hidden;
+}
+
+.footer-img {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+/* Ensures the content fits within the viewport */
+.roles-app {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Permissions container styling */
+.permissions-container {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.permissions-container h5 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.permissions-container .list-group-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+}
+
+.permissions-container .form-check-label {
+    margin-left: 8px;
+    font-size: 14px;
+}

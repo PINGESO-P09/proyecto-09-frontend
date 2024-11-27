@@ -1,0 +1,57 @@
+/* NotificationBell.css */
+
+/* Contenedor de la campana */
+.notification-bell-container {
+    position: fixed;
+    bottom: 20px;
+    z-index: 3;
+    transition: left 0.4s ease; /* Sincroniza con el movimiento del menú */
+}
+
+.notification-icon {
+    font-size: 24px;
+    color: #1a1a2e;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.notification-icon:hover {
+    color: #e94560;
+}
+
+/* Desplegable de notificaciones */
+.notification-dropdown {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+    width: 300px;
+    max-height: 300px; /* Limita la altura del contenedor para permitir el scroll */
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    z-index: 10;
+    overflow-y: auto; /* Habilita el scroll solo en este contenedor */
+}
+
+.notification-item {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item p {
+    margin: 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.timestamp {
+    display: block;
+    font-size: 12px;
+    color: #999;
+}
