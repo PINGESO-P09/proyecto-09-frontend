@@ -238,8 +238,9 @@ const handleSaveNewProject = async () => {
 
 const handleEditProject = (project) => {
   console.log("Abriendo modal para editar el proyecto:", project);
-  setEditingProject(project);  // Verifica que 'project' tenga los datos correctos
+  setEditingProject(project); // Asegúrate de que el proyecto se está asignando correctamente
   setShowEditModal(true); // Muestra el modal de edición
+  console.log("Modal de edición abierto.");
 };
 
 
@@ -248,49 +249,50 @@ const handleEditProject = (project) => {
    * @param {number} projectId - El ID del proyecto que se va a eliminar.
    */
   const handleDeleteProject = async (projectId) => {
-    console.log(`Intentando eliminar el proyecto con ID: ${projectId}`);
-    if (window.confirm("¿Desea eliminar el proyecto y todos sus documentos?")) {
+    if (window.confirm("¿Seguro que quieres eliminar este proyecto?")) {
+      setLoading(true); // Muestra el indicador de carga
+  
       try {
         const accessToken = localStorage.getItem("accessToken"); // Obtiene el token de acceso
-        console.log(`Token de acceso para eliminación: ${accessToken}`);
-
-        // Realiza una solicitud DELETE al backend para eliminar el proyecto de la base de datos
-        const response = await axios.delete(`http://localhost:8000/api/projects/${projectId}/`, {
+        if (!accessToken) {
+          console.error("No se encontró el token de acceso.");
+          alert("No se encontró el token de acceso.");
+          return;
+        }
+  
+        // Realiza la solicitud DELETE al backend para eliminar el proyecto
+        const response = await axios.delete(`http://localhost:8000/api/projects/${projectId}/delete/`, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`, // Incluye el token en los headers
+            'Authorization': `Bearer ${accessToken}`, // Incluye el token de acceso en los headers
           }
         });
-
-        console.log(`Respuesta del backend después de eliminar el proyecto:`, response.status);
-
+  
         if (response.status === 204) {
-          console.log("Proyecto eliminado exitosamente. Actualizando estado de proyectos...");
-          setProyectos(proyectos.filter(proj => proj.id !== projectId));
-          alert("Proyecto eliminado exitosamente.");
-          console.log("Estado de proyectos actualizado.");
+          // El proyecto se eliminó con éxito
+          setProyectos(prevProyectos => prevProyectos.filter(proj => proj.id !== projectId)); // Actualiza el estado eliminando el proyecto
+          alert("Proyecto eliminado con éxito.");
         } else {
-          console.warn("El backend respondió pero no con el status esperado (204).");
-          alert("No se pudo eliminar el proyecto. Verifica los datos.");
+          alert("No se pudo eliminar el proyecto.");
         }
       } catch (error) {
         console.error("Error al eliminar el proyecto:", error.response || error.message);
-        console.log("Detalles del error:", error);
-        alert("Error al eliminar el proyecto. Revisa la consola para más detalles.");
+        alert("Error al eliminar el proyecto.");
+      } finally {
+        setLoading(false); // Finaliza el estado de carga
       }
-    } else {
-      console.log("Eliminación del proyecto cancelada por el usuario.");
     }
   };
+  
+  
 
   const handleSaveProject = async () => {
     console.log("Intentando guardar los cambios en el proyecto:", editingProject);
-  
-    // Verifica que editingProject esté definido y tenga un 'id'
+    
     if (!editingProject || !editingProject.id) {
-      console.error("Error: 'editingProject' no está definido correctamente o falta el 'id'.");
-      alert("Error: No se pudo encontrar el proyecto para editar.");
-      return; // Sale de la función si no hay un proyecto para editar
+      console.error("No se ha seleccionado un proyecto para editar.");
+      alert("No se ha seleccionado un proyecto válido para editar.");
+      return;
     }
   
     // Validación básica de campos obligatorios
@@ -301,9 +303,19 @@ const handleEditProject = (project) => {
       editingProject.fecha_termino &&
       editingProject.estado
     ) {
+      console.log("Todos los campos obligatorios están completos para la edición.");
       setLoading(true); // Indica que se está procesando la solicitud
+  
       try {
-        console.log("Enviando solicitud PUT al backend para actualizar el proyecto...");
+        const accessToken = localStorage.getItem("accessToken"); // Obtiene el token de acceso
+        if (!accessToken) {
+          console.error("No se ha encontrado el token de acceso.");
+          alert("No se ha encontrado el token de acceso.");
+          return;
+        }
+  
+        console.log(`Token de acceso para actualización: ${accessToken}`);
+  
         const response = await axios.put(`http://localhost:8000/api/projects/${editingProject.id}/`, {
           titulo: editingProject.titulo,
           cliente: editingProject.cliente,
@@ -312,36 +324,40 @@ const handleEditProject = (project) => {
           fecha_termino: editingProject.fecha_termino,
           estado: editingProject.estado,
           inversion: editingProject.inversion ? parseFloat(editingProject.inversion) : null,
+          folder_name: editingProject.folder_name,
         }, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
-          },
+            'Authorization': `Bearer ${accessToken}`, // Incluye el token en los headers
+          }
         });
   
-        if (response.status === 200) {
-          console.log("Proyecto actualizado exitosamente.");
-          const updatedProject = response.data.project;
-          setProyectos(proyectos.map(proj =>
-            proj.id === updatedProject.id ? updatedProject : proj
-          ));
+        console.log("Respuesta del backend después de actualizar el proyecto:", response.data);
+  
+        if (response.data) {
+          setProyectos(prevProyectos => {
+            const updatedProyectos = prevProyectos.map(proj => 
+              proj.id === editingProject.id ? { ...proj, ...response.data } : proj
+            );
+            return updatedProyectos;
+          });
           setShowEditModal(false); // Cierra el modal
           alert("Proyecto actualizado exitosamente.");
         } else {
-          console.warn("No se pudo actualizar el proyecto.");
-          alert("Error al actualizar el proyecto.");
+          alert("No se pudo actualizar el proyecto. Verifica los datos.");
         }
       } catch (error) {
-        console.error("Error al actualizar el proyecto:", error);
+        console.error("Error al actualizar el proyecto:", error.response || error.message);
         alert(`Error al actualizar el proyecto: ${error.response?.data?.error || error.message}`);
       } finally {
         setLoading(false); // Finaliza el estado de carga
       }
     } else {
-      console.warn("Faltan campos obligatorios en la edición. No se puede guardar el proyecto.");
       alert("Por favor, completa todos los campos obligatorios.");
     }
   };
+  
+  
 
   /**
    * Filtra los documentos para mostrar solo los asociados al proyecto seleccionado.
