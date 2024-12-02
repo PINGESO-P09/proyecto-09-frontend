@@ -238,7 +238,17 @@ const handleSaveNewProject = async () => {
 
 const handleEditProject = (project) => {
   console.log("Abriendo modal para editar el proyecto:", project);
-  setEditingProject(project); // Asegúrate de que el proyecto se está asignando correctamente
+  setEditingProject({
+    id: project.id,
+    titulo: project.titulo,  // Asegúrate de que 'titulo' esté incluido aquí
+    cliente: project.cliente,  // Asegúrate de que 'cliente' esté incluido aquí
+    correo: project.correo,
+    fecha_inicio: project.fecha_inicio,
+    fecha_termino: project.fecha_termino,
+    estado: project.estado,
+    inversion: project.inversion,
+    folder_name: project.folder_name,
+  });
   setShowEditModal(true); // Muestra el modal de edición
   console.log("Modal de edición abierto.");
 };
@@ -288,7 +298,7 @@ const handleEditProject = (project) => {
 
   const handleSaveProject = async () => {
     console.log("Intentando guardar los cambios en el proyecto:", editingProject);
-    
+  
     if (!editingProject || !editingProject.id) {
       console.error("No se ha seleccionado un proyecto para editar.");
       alert("No se ha seleccionado un proyecto válido para editar.");
@@ -301,21 +311,19 @@ const handleEditProject = (project) => {
       editingProject.cliente &&
       editingProject.fecha_inicio &&
       editingProject.fecha_termino &&
-      editingProject.estado
+      editingProject.estado &&
+      editingProject.folder_name
     ) {
       console.log("Todos los campos obligatorios están completos para la edición.");
       setLoading(true); // Indica que se está procesando la solicitud
-  
       try {
-        const accessToken = localStorage.getItem("accessToken"); // Obtiene el token de acceso
-        if (!accessToken) {
-          console.error("No se ha encontrado el token de acceso.");
-          alert("No se ha encontrado el token de acceso.");
-          return;
-        }
+        console.log(`Realizando solicitud PUT a 'http://localhost:8000/api/projects/${editingProject.id}/' con los datos actualizados...`);
+        console.log("Datos actualizados del proyecto:", editingProject);
   
+        const accessToken = localStorage.getItem("accessToken"); // Obtiene el token de acceso
         console.log(`Token de acceso para actualización: ${accessToken}`);
   
+        // Realiza una solicitud PUT al backend para actualizar el proyecto
         const response = await axios.put(`http://localhost:8000/api/projects/${editingProject.id}/`, {
           titulo: editingProject.titulo,
           cliente: editingProject.cliente,
@@ -335,30 +343,36 @@ const handleEditProject = (project) => {
         console.log("Respuesta del backend después de actualizar el proyecto:", response.data);
   
         if (response.data) {
+          console.log("Proyecto actualizado exitosamente. Actualizando estado de proyectos...");
+          // Actualiza el proyecto en el estado de proyectos
           setProyectos(prevProyectos => {
             const updatedProyectos = prevProyectos.map(proj => 
               proj.id === editingProject.id ? { ...proj, ...response.data } : proj
             );
             return updatedProyectos;
           });
-          setShowEditModal(false); // Cierra el modal
+          setShowEditModal(false); // Cierra el modal de edición
           alert("Proyecto actualizado exitosamente.");
+          console.log("Estado de proyectos actualizado y modal cerrado.");
         } else {
+          console.warn("La respuesta del backend no contiene datos actualizados.");
           alert("No se pudo actualizar el proyecto. Verifica los datos.");
         }
       } catch (error) {
         console.error("Error al actualizar el proyecto:", error.response || error.message);
+        console.log("Detalles del error:", error);
         alert(`Error al actualizar el proyecto: ${error.response?.data?.error || error.message}`);
       } finally {
         setLoading(false); // Finaliza el estado de carga
+        console.log("Finalizado el proceso de actualización del proyecto. Estado de carga:", loading);
       }
     } else {
+      console.warn("Faltan campos obligatorios en la edición. No se puede guardar el proyecto.");
       alert("Por favor, completa todos los campos obligatorios.");
     }
   };
   
   
-
   /**
    * Filtra los documentos para mostrar solo los asociados al proyecto seleccionado.
    */
@@ -647,29 +661,27 @@ const handleEditProject = (project) => {
           {editingProject ? (
             <>
               <Form.Group className="mb-3">
-                <Form.Label>Cliente</Form.Label>
+                <Form.Label>Título</Form.Label>
                 <Form.Control
                   type="text"
-                  value={newProject.cliente}
+                  value={editingProject.titulo}  // Verifica que 'editingProject.titulo' tiene el valor correcto
                   onChange={(e) => {
-                    console.log(`Actualizando cliente: ${e.target.value}`);
-                    setNewProject({ ...newProject, cliente: e.target.value });
+                    console.log(`Actualizando título en edición: ${e.target.value}`);
+                    setEditingProject({ ...editingProject, titulo: e.target.value });
                   }}
-                  placeholder="Ingresa el nombre del cliente"
                   required
                 />
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Label>Título</Form.Label>
+                <Form.Label>Cliente</Form.Label>
                 <Form.Control
                   type="text"
-                  value={newProject.titulo}
+                  value={editingProject.cliente}  // Verifica que 'editingProject.cliente' tiene el valor correcto
                   onChange={(e) => {
-                    console.log(`Actualizando título: ${e.target.value}`);
-                    setNewProject({ ...newProject, titulo: e.target.value });
+                    console.log(`Actualizando cliente en edición: ${e.target.value}`);
+                    setEditingProject({ ...editingProject, cliente: e.target.value });
                   }}
-                  placeholder="Ingresa el nombre del proyecto"
                   required
                 />
               </Form.Group>
