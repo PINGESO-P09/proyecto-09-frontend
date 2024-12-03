@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Documentos.css';
 import {
   Button,
@@ -10,6 +10,7 @@ import {
   Modal
 } from 'react-bootstrap';
 import { FaUpload, FaFolderPlus, FaEdit, FaEllipsisH, FaTrash, FaDownload, FaExternalLinkAlt, FaPencilAlt } from 'react-icons/fa';
+import axios from 'axios';
 
 const Documentos = () => {
   const [documents, setDocuments] = useState([
@@ -34,13 +35,21 @@ const Documentos = () => {
   const [selectedDocumentType, setSelectedDocumentType] = useState('');
   const [uploadedFile, setUploadedFile] = useState(null);
 
-  const [proyectos, setProyectos] = useState([
-    { id: 1, name: 'Proyecto A' },
-    { id: 2, name: 'Proyecto B' },
-    { id: 3, name: 'Proyecto C' },
-  ]);
+  const [proyectos, setProyectos] = useState([]);
+  const [carpetas, setCarpetas] = useState([]);
 
-  const [carpetas, setCarpetas] = useState(['Cerrados', 'En Etapa 3', 'Activos', 'Finalizados', 'Recientes', 'En Proceso']);
+  useEffect(() => {
+    // Cargar solo los títulos de los proyectos desde el backend
+    const fetchProjectTitles = async () => {
+        try {
+            const response = await axios.get('http://localhost:8000/api/projects/titles/');
+            setProyectos(response.data);
+        } catch (error) {
+            console.error("Error al obtener los proyectos:", error);
+        }
+    };
+    fetchProjectTitles();
+}, []);
 
   const handleSortAlphabetically = () => {
     const sortedDocuments = [...documents].sort((a, b) =>
@@ -108,18 +117,47 @@ const Documentos = () => {
     }
   };
 
-  const handleCreateFolder = () => {
-    if (newFolderName && selectedProject) {
-      const projectName = proyectos.find((p) => p.id === parseInt(selectedProject))?.name || '';
-      const newFolder = `${projectName}/${newFolderName}`;
-      setCarpetas([...carpetas, newFolder]);
-      setShowCreateFolderModal(false);
-      setNewFolderName('');
-      setSelectedProject('');
-    } else {
-      alert('Selecciona un proyecto y escribe un nombre para la carpeta.');
+const [message, setMessage] = useState('');  // Estado para el mensaje
+const [showMessage, setShowMessage] = useState(false);  // Estado para controlar la visibilidad del mensaje
+
+const handleCreateFolder = async () => {
+  if (newFolderName && selectedProject) {
+    const projectName = proyectos.find((p) => p.id === parseInt(selectedProject))?.name || '';
+    const newFolder = `${projectName}/${newFolderName}`;
+
+    try {
+      // Realiza la solicitud al backend para crear la carpeta
+      const response = await axios.post('http://localhost:8000/api/create-folder/', {
+        folder_name: newFolder,
+        project_id: selectedProject, // Asegúrate de enviar el project_id también
+      });
+
+      if (response.status === 201) {
+        alert(`Carpeta '${newFolder}' creada con éxito.`);
+
+        // Actualiza las carpetas y cierra el modal
+        setCarpetas([...carpetas, newFolder]);
+        setShowCreateFolderModal(false);
+        setNewFolderName('');
+        setSelectedProject('');
+
+        // Mostrar el mensaje de éxito
+        setMessage('Carpeta creada con éxito.');
+        setShowMessage(true);
+
+        // Ocultar el mensaje después de 3 segundos
+        setTimeout(() => setShowMessage(false), 3000);
+      } else {
+        console.error("Error al crear la carpeta: ", response);
+      }
+    } catch (error) {
+      console.error("Error al crear la carpeta:", error.response ? error.response.data : error.message);
+      alert("Ocurrió un error al crear la carpeta. Verifica los detalles.");
     }
-  };
+  } else {
+    alert('Selecciona un proyecto y escribe un nombre para la carpeta.');
+  }
+};
 
   const filteredDocuments = documents.filter((doc) =>
     doc.doc.toLowerCase().includes(searchTerm.toLowerCase())
@@ -219,42 +257,42 @@ const Documentos = () => {
         </Card>
 
         <Modal show={showCreateFolderModal} onHide={() => setShowCreateFolderModal(false)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Crear Carpeta</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form.Group>
-              <Form.Label>Nombre de la Carpeta</Form.Label>
-              <Form.Control
-                type="text"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mt-3">
-              <Form.Label>Seleccionar Proyecto</Form.Label>
-              <Form.Control
-                as="select"
-                value={selectedProject}
-                onChange={(e) => setSelectedProject(e.target.value)}
-              >
-                <option value="">Selecciona un proyecto</option>
-                {proyectos.map((proyecto) => (
-                  <option key={proyecto.id} value={proyecto.id}>
-                    {proyecto.name}
-                  </option>
-                ))}
-              </Form.Control>
-            </Form.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowCreateFolderModal(false)}>
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={handleCreateFolder}>
-              Crear Carpeta
-            </Button>
-          </Modal.Footer>
+            <Modal.Header closeButton>
+              <Modal.Title>Crear Carpeta</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Form.Group>
+                <Form.Label>Nombre de la Carpeta</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                />
+              </Form.Group>
+              <Form.Group className="mt-3">
+                <Form.Label>Seleccionar Proyecto</Form.Label>
+                <Form.Control
+                  as="select"
+                  value={selectedProject}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                >
+                  <option value="">Selecciona un proyecto</option>
+                  {proyectos.map((proyecto) => (
+                    <option key={proyecto.id} value={proyecto.id}>
+                      {proyecto.name}
+                    </option>
+                  ))}
+                </Form.Control>
+              </Form.Group>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowCreateFolderModal(false)}>
+                Cancelar
+              </Button>
+              <Button variant="primary" onClick={handleCreateFolder}>
+                Crear Carpeta
+              </Button>
+            </Modal.Footer>
         </Modal>
 
         <Modal show={showUploadDocumentModal} onHide={closeUploadDocumentModal}>

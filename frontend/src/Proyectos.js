@@ -9,8 +9,6 @@ import { Button, Card, Table, Form, Modal, Spinner, Alert } from 'react-bootstra
 import { FaEdit, FaTrash } from 'react-icons/fa'; // Importa íconos para botones de acción
 
 const Proyectos = () => {
-  // Estado para almacenar el proyecto seleccionado para ver sus documentos
-  const [selectedProject, setSelectedProject] = useState(null);
   
   // Estado para almacenar el proyecto que se está editando
   const [editingProject, setEditingProject] = useState(null);
@@ -36,10 +34,6 @@ const Proyectos = () => {
   
   // Estado para almacenar la lista de documentos (puedes modificar esto para obtenerlos desde el backend si es necesario)
   const [documents, setDocuments] = useState([
-    { id: 1, projectTitle: 'IN/1001/24', nombre: 'Informe Dimensiones', cliente: 'ACME', fecha: '2022-01-23', tipo: 'Informe' },
-    { id: 2, projectTitle: 'IN/1002/24', nombre: 'Plano 3D', cliente: 'Museo Nacional', fecha: '2022-01-09', tipo: 'Plano' },
-    { id: 3, projectTitle: 'IN/1003/24', nombre: 'Análisis Financiero', cliente: 'Coliseo Metropolitano', fecha: '2023-08-15', tipo: 'Informe' },
-    { id: 4, projectTitle: 'IN/1004/24', nombre: 'Especificaciones Técnicas', cliente: 'Mausoleo Colón', fecha: '2023-11-02', tipo: 'Manual' },
   ]);
 
   // Estado para indicar si se está procesando una solicitud (creación o edición de proyecto)
@@ -47,6 +41,10 @@ const Proyectos = () => {
 
   // Estado para manejar errores generales
   const [error, setError] = useState(null);
+
+  const [selectedProject, setSelectedProject] = useState('');  // Para almacenar el ID del proyecto
+  const [selectedProjectName, setSelectedProjectName] = useState('');  // Para almacenar el nombre del proyecto
+
 
   /**
    * Función para generar un nuevo título de proyecto automáticamente.
@@ -293,6 +291,14 @@ const handleEditProject = (project) => {
       }
     }
   };
+
+  const handleSelectProject = (event) => {
+    const selected = proyectos.find((p) => p.id === parseInt(event.target.value));
+    if (selected) {
+      setSelectedProject(selected.id);  // Guarda el ID del proyecto
+      setSelectedProjectName(selected.titulo);  // Guarda el nombre del proyecto (su título)
+    }
+  };
   
   
 
@@ -396,21 +402,18 @@ const handleEditProject = (project) => {
         </Alert>
       )}
   
-      {/* Selector para filtrar proyectos */}
-      <Form.Group className="mb-3">
-        <Form.Label>Seleccionar Proyecto:</Form.Label>
-        <Form.Control 
-          as="select" 
-          onChange={(e) => {
-            console.log(`Proyecto seleccionado: ${e.target.value}`);
-            setSelectedProject(e.target.value);
-          }}
-          value={selectedProject || ""}>
+          <Form.Group className="mt-3">
+            <Form.Label>Seleccionar Proyecto</Form.Label>
+            <Form.Control
+              as="select"
+              value={selectedProject}
+              onChange={handleSelectProject}
+            >
           <option value="">Todos los Proyectos</option>
           {proyectos.map(proyecto => (
-            <option key={proyecto.id} value={proyecto.codigo}>
-              {proyecto.codigo} - {proyecto.cliente}
-            </option>
+            <option key={proyecto.id} value={proyecto.id}>
+            {proyecto.titulo} 
+          </option>
           ))}
         </Form.Control>
       </Form.Group>
@@ -474,37 +477,38 @@ const handleEditProject = (project) => {
       </Card>
   
       {/* Tabla de documentos asociados al proyecto seleccionado */}
-      <Card>
-        <Card.Body>
-          <h5>Documentos Asociados al Proyecto {selectedProject || "Todos"}</h5>
-          <Table responsive bordered>
-            <thead>
-              <tr>
-                <th>Nombre Documento</th>
-                <th>Cliente</th>
-                <th>Fecha Subido</th>
-                <th>Tipo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDocuments.length > 0 ? (
-                filteredDocuments.map((doc) => (
-                  <tr key={doc.id}>
-                    <td>{doc.nombre}</td>
-                    <td>{doc.cliente}</td>
-                    <td>{doc.fecha}</td>
-                    <td>{doc.tipo}</td>
-                  </tr>
-                ))
-              ) : (
+        <Card>
+          <Card.Body>
+          <h5>Documentos Asociados al Proyecto {selectedProjectName || "Todos"}</h5>
+            <Table responsive bordered>
+              <thead>
                 <tr>
-                  <td colSpan="4" className="text-center">No hay documentos para este proyecto.</td>
+                  <th>Nombre Documento</th>
+                  <th>Título Proyecto</th> {/* Cambié de "Cliente" a "Título Proyecto" */}
+                  <th>Fecha Subido</th>
+                  <th>Tipo</th>
                 </tr>
-              )}
-            </tbody>
-          </Table>
-        </Card.Body>
-      </Card>
+              </thead>
+              <tbody>
+                {filteredDocuments.length > 0 ? (
+                  filteredDocuments.map((doc) => (
+                    <tr key={doc.id}>
+                      <td>{doc.nombre}</td>
+                      {/* Muestra el nombre del proyecto, no el ID */}
+                      <td>{doc.proyecto ? doc.proyecto.titulo : "No asignado"}</td> 
+                      <td>{doc.fecha}</td>
+                      <td>{doc.tipo}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="text-center">No hay documentos para este proyecto.</td>
+                  </tr>
+                )}
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
   
       {/* Modal para crear un nuevo proyecto */}
       <Modal show={showNewProjectModal} onHide={() => setShowNewProjectModal(false)}>
