@@ -1,3 +1,5 @@
+/* Mensajes.css */
+
 /* Sidebar styling */
 .sidebar {
     height: 100vh;
@@ -5,6 +7,17 @@
     transition: all 0.3s ease-in-out;
     padding: 20px;
     overflow-y: auto;
+}
+
+/* Logo styling */
+.logo-img {
+    width: 120px; /* Tamaño del logo */
+    height: auto;
+    margin-bottom: 15px;
+    border-radius: 8px; /* Opcional: bordes redondeados */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .sidebar .navbar-brand {
@@ -31,24 +44,66 @@
     color: #fff;
 }
 
+.sidebar .nav-link i {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+/* Sidebar hidden */
+.sidebar-hidden {
+    width: 0;
+    overflow: hidden;
+}
+
+/* Main content area */
+.main-content {
+    flex: 1;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-left: 250px; /* Deja espacio para el sidebar */
+    width: calc(100% - 250px);
+    box-sizing: border-box;
+    overflow-y: auto;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Main content area when sidebar is hidden */
+.main-content-expanded {
+    margin-left: 0;
+    width: 100%;
+}
+
+/* Header styling */
+h1 {
+    font-size: 28px;
+    font-weight: bold;
+    color: #1a1a2e;
+    text-align: center;
+    margin: 0 auto 20px auto;
+    width: 100%;
+}
+
 /* Contactos container styling */
 .contactos-container {
     padding: 20px;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
 }
 
-/* Main chat container styling for the Messages view */
+/* Chat container */
 .main-chat-container {
     padding: 20px;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    height: 80vh;
+    height: 70vh; /* Ajusta la altura para no ocupar toda la pantalla */
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-end; /* Mantiene el chat al fondo */
 }
 
 /* Chat messages area */
@@ -58,6 +113,7 @@
     margin-bottom: 15px;
 }
 
+/* Styling for individual chat messages */
 .chat-message {
     padding: 10px;
     border-radius: 5px;
@@ -98,7 +154,7 @@
     transform: translateY(-2px);
 }
 
-/* General Buttons Styling */
+/* General Button Styling */
 button {
     font-size: 16px;
     font-weight: bold;
@@ -118,7 +174,7 @@ button:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Botones secundarios */
+/* Secondary Buttons */
 button.btn-secondary {
     background-color: #1a1a2e;
     color: #e94560;
@@ -129,28 +185,11 @@ button.btn-secondary:hover {
     color: #fff;
 }
 
-/* Buttons in modals */
-.modal button {
+/* Modal styling */
+.modal-content {
     width: 100%;
-    padding: 12px 20px;
-    font-size: 16px;
-}
-
-/* Botones de acción en lista */
-.list-group-item button {
-    font-size: 14px;
-    padding: 6px 12px;
-    background-color: #f1f1f1;
-    color: #1a1a2e;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-}
-
-.list-group-item button:hover {
-    background-color: #e94560;
-    color: #fff;
-    border-color: #e94560;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 /* Modal Close Button */
@@ -187,6 +226,85 @@ button.btn-secondary:hover {
 .footer-img {
     max-width: 100%;
     height: auto;
-    max-height: 150px;
     object-fit: contain;
+    max-height: 150px;
+}
+
+/* Notification Bell Styling */
+.notification-icon {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Action dropdown item */
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    padding: 8px 15px;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #1a1a2e;
+}
+
+/* Pagination and rows per page selector */
+.pagination {
+    display: flex;
+    align-items: center;
+}
+
+.pagination .page-item .page-link {
+    color: #1a1a2e;
+    border: none;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #1a1a2e;
+    color: white;
+    border-radius: 50%;
+}
+
+.pagination .page-link:hover {
+    background-color: #e94560;
+    color: #fff;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 10px;
+    }
+
+    .contactos-container, .main-chat-container {
+        padding: 10px;
+        width: 100%;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    .footer-img-container {
+        padding: 10px 0;
+    }
+}
+
+@media (max-width: 576px) {
+    h1 {
+        font-size: 20px;
+    }
+
+    .chat-message {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .footer-img-container {
+        padding: 5px 0;
+    }
 }

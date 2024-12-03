@@ -1,142 +1,207 @@
-/* Sidebar styling */
-.sidebar {
-    height: 100vh;
-    background-color: #1a1a2e;
-    transition: all 0.3s ease-in-out;
-    padding: 20px;
-    overflow-y: auto;
-}
+/* Documentos.css */
 
-.sidebar .navbar-brand {
-    font-size: 24px;
-    font-weight: bold;
-    color: #e94560;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.sidebar .nav-link {
-    color: #fff;
-    font-size: 16px;
-    padding: 10px 20px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    transition: background 0.3s, color 0.3s;
+/* Contenedor principal de la vista Documentos */
+.documentos-app {
     display: flex;
+    flex-direction: column;
     align-items: center;
-}
-
-.sidebar .nav-link:hover {
-    background-color: #e94560;
-    color: #fff;
-}
-
-.sidebar .nav-link i {
-    margin-right: 10px;
-    font-size: 18px;
-}
-
-/* Sidebar hidden */
-.sidebar-hidden {
-    width: 0;
-    overflow: hidden;
-}
-
-/* Main content adjustment when sidebar is hidden */
-.main-content {
+    padding: 20px;
+    width: 100%;
+    height: 100vh;
     background-color: #f8f9fa;
+}
+
+/* Contenido principal */
+.main-content {
+    background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease-in-out;
     padding: 20px;
+    width: 100%;
+    margin: 20px 0;
+    flex-grow: 1;
+    overflow-y: auto;
+    border-radius: 8px;
 }
 
-/* Footer logo container */
-.footer-img-container {
+/* Footer con el logo */
+footer.footer-img-container {
+    margin-top: 40px;
+    padding: 20px 0;
+    background-color: #f8f9fa;
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
-    margin-top: 20px;
-    padding: 20px 0; /* Adds padding to create space around the logo */
-    background-color: #f8f9fa;
 }
 
-/* Footer logo image styling */
-.footer-img {
+footer.footer-img-container .footer-img {
     max-width: 100%;
     height: auto;
-    max-height: 200px; /* Prevents image from getting too tall */
     object-fit: contain;
+    max-height: 150px;
 }
 
-/* Control buttons styling */
-.documentos-controls {
+/* Estilo para la tabla de documentos */
+.documentos-container {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    flex-grow: 1;
+}
+
+.documentos-container .list-group-item {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    justify-content: space-between;
+    padding: 10px 15px;
 }
 
-/* Search input styling */
-.search-input {
-    max-width: 300px;
-    border-radius: 20px;
-    padding: 8px;
+.documentos-container button {
     font-size: 14px;
+    padding: 6px 12px;
+    background-color: #f1f1f1;
+    color: #1a1a2e;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: all 0.3s ease;
 }
 
-/* Table styling */
+.documentos-container button:hover {
+    background-color: #e94560;
+    color: white;
+    border-color: #e94560;
+}
+
+/* Modal ajustes */
+.modal-content {
+    width: 100%;
+    max-width: 600px; /* Aumentado para mayor tamaño de modal */
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
+/* Asegura que los contenedores internos no se desborden */
+.table-scroll {
+    max-height: 400px; /* Máxima altura del cuerpo de la tabla */
+    overflow-y: auto;  /* Habilita el scroll solo en este contenedor */
+}
+
+/* Estilos generales de tabla */
+.table {
+    margin-top: 20px;
+    width: 100%;
+}
+
 .table thead th {
     background-color: #1a1a2e;
     color: white;
     font-size: 14px;
+    text-align: center;
 }
 
 .table tbody tr:hover {
     background-color: #f2f2f2;
 }
 
-/* Scrollable table body */
-.table-scroll {
-    max-height: 300px; /* Define the height of the scrollable area */
-    overflow-y: auto; /* Enables vertical scroll */
-    padding-right: 10px; /* Adds padding for better UX */
+.table tbody td {
+    text-align: center;
 }
 
-/* Action buttons */
+/* Estilo de los botones generales */
 button, .btn-outline-secondary {
     font-size: 14px;
 }
 
-/* Remove dropdown arrow for a cleaner look */
+/* Dropdown */
 .dropdown-toggle::after {
     display: none;
 }
 
-/* Dropdown menu positioning and z-index for overlapping */
 .dropdown-menu {
     position: absolute;
-    z-index: 1050; /* Ensures the menu is on top */
-    right: 0; /* Aligns the dropdown to the right for better UX */
+    z-index: 1050;
+    right: 0;
 }
 
-/* Notification bell styling */
+/* Estilo de las notificaciones */
 .notification-icon {
     font-size: 24px;
     cursor: pointer;
 }
 
-/* Adjust font size and padding in action dropdown items */
-.dropdown-item {
+/* Paginación y selector de filas por página */
+.pagination {
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-size: 14px;
-    padding: 8px 15px;
 }
 
-/* For better dropdown menu hover effect */
-.dropdown-item:hover {
-    background-color: #f8f9fa;
+.pagination .page-item .page-link {
     color: #1a1a2e;
+    border: none;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #1a1a2e;
+    color: white;
+    border-radius: 50%;
+}
+
+.pagination .page-link:hover {
+    background-color: #e94560;
+    color: #fff;
+}
+
+/* Ajustes para pantallas más pequeñas */
+@media (max-width: 768px) {
+    .documentos-app {
+        padding: 10px;
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+
+    footer.footer-img-container {
+        padding: 10px 0;
+    }
+
+    .footer-img {
+        max-height: 100px;
+    }
+
+    .table-scroll {
+        max-height: 250px;
+    }
+
+    .table thead th, .table tbody td {
+        font-size: 12px;
+    }
+
+    .modal-content {
+        max-width: 90%;
+    }
+}
+
+@media (max-width: 576px) {
+    .documentos-app {
+        padding: 5px;
+    }
+
+    .main-content {
+        padding: 10px;
+    }
+
+    .table-scroll {
+        max-height: 200px;
+    }
+
+    .footer-img {
+        max-height: 80px;
+    }
+
+    .modal-content {
+        max-width: 95%;
+    }
 }

@@ -1,3 +1,17 @@
+/* Roles.css */
+
+/* General container for the roles page */
+.roles-app {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 20px;
+  width: 100%; /* Ensure it takes up the full width */
+  height: 100vh; /* Full height of the viewport */
+  box-sizing: border-box;
+}
+
 /* Sidebar styling */
 .sidebar {
   height: 100vh;
@@ -5,6 +19,17 @@
   transition: all 0.3s ease-in-out;
   padding: 20px;
   overflow-y: auto;
+}
+
+/* Logo styling */
+.logo-img {
+  width: 120px; /* Tamaño del logo */
+  height: auto;
+  margin-bottom: 15px;
+  border-radius: 8px; /* Opcional: bordes redondeados */
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .sidebar .navbar-brand {
@@ -42,36 +67,258 @@
   overflow: hidden;
 }
 
-/* Main content adjustment when sidebar is hidden */
+/* Main content adjustment when sidebar is visible/hidden */
 .main-content {
+  flex: 1;
   background-color: #f8f9fa;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease-in-out;
   padding: 20px;
+  margin-left: 250px;
+  width: calc(100% - 250px);
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
-/* Footer image container styling */
+/* Main content when sidebar is hidden */
+.main-content-expanded {
+  margin-left: 0;
+  width: 100%;
+}
+
+/* Header styling */
+h1 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1a1a2e;
+  text-align: center;
+  margin: 0 auto 20px auto;
+  width: 100%;
+}
+
+/* Table and content container */
+.roles-container {
+  width: 100%;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+/* User roles list item */
+.roles-container .list-group-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 15px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+/* Buttons inside the list */
+.roles-container button {
+  font-size: 14px;
+  padding: 6px 12px;
+  background-color: #f1f1f1;
+  color: #1a1a2e;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+/* Button hover effect */
+.roles-container button:hover {
+  background-color: #e94560;
+  color: white;
+  border-color: #e94560;
+}
+
+/* Modal styling */
+.modal-content {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Permissions container styling */
+.permissions-container {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.permissions-container h5 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+/* Styling for the checkboxes */
+.permissions-container .form-check-label {
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+/* Modal Header and Footer styling */
+.modal-header,
+.modal-footer {
+  background-color: #f8f9fa;
+}
+
+.modal-header .modal-title {
+  color: #1a1a2e;
+  font-weight: bold;
+}
+
+.modal-footer .btn-primary {
+  background-color: #1a1a2e;
+  border: none;
+}
+
+/* Footer logo container */
 .footer-img-container {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: auto;
-  max-height: 300px;
+  margin-top: 40px;
+  padding: 20px 0;
   background-color: #f8f9fa;
-  overflow: hidden;
 }
 
+/* Footer logo image styling */
 .footer-img {
-  width: auto;
-  height: 100%;
   max-width: 100%;
+  height: auto;
   object-fit: contain;
+  max-height: 150px;
 }
 
-/* Ensures the content fits within the viewport */
-.roles-app {
-  flex: 1;
+/* Table styling */
+.table {
+  margin-top: 20px;
+}
+
+.table thead th {
+  background-color: #1a1a2e;
+  color: white;
+  font-size: 14px;
+  text-align: center;
+}
+
+.table tbody tr:hover {
+  background-color: #f2f2f2;
+}
+
+.table tbody td {
+  text-align: center;
+}
+
+/* Scrollable table body */
+.table-scroll {
+  max-height: 300px;
   overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Dropdown */
+.dropdown-toggle::after {
+  display: none;
+}
+
+.dropdown-menu {
+  position: absolute;
+  z-index: 1050;
+  right: 0;
+}
+
+/* Notification bell styling */
+.notification-icon {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Action dropdown item */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  padding: 8px 15px;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+  color: #1a1a2e;
+}
+
+/* Pagination and rows per page selector */
+.pagination {
+  display: flex;
+  align-items: center;
+}
+
+.pagination .page-item .page-link {
+  color: #1a1a2e;
+  border: none;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #1a1a2e;
+  color: white;
+  border-radius: 50%;
+}
+
+.pagination .page-link:hover {
+  background-color: #e94560;
+  color: #fff;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 10px;
+  }
+
+  .roles-container {
+    padding: 10px;
+    width: 100%;
+  }
+
+  .roles-container .list-group-item {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .footer-img-container {
+    padding: 10px 0;
+  }
+}
+
+@media (max-width: 576px) {
+  h1 {
+    font-size: 20px;
+  }
+
+  .roles-container .list-group-item {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .footer-img-container {
+    padding: 5px 0;
+  }
 }

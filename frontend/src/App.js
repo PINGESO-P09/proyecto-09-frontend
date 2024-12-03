@@ -44,7 +44,7 @@ function AppContent() {
             </li>
             <li>
               <NavLink to="/permisos" activeClassName="active">
-                Asignar Permisos
+                Gestión Usuarios
               </NavLink>
             </li>
             <li>
