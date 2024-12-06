@@ -7,50 +7,198 @@ import {
   Table,
   Form,
   Dropdown,
-  Modal
+  Modal,
+  Alert
 } from 'react-bootstrap';
-import { FaUpload, FaFolderPlus, FaEdit, FaEllipsisH, FaTrash, FaDownload, FaExternalLinkAlt, FaPencilAlt } from 'react-icons/fa';
+import { 
+  FaUpload, 
+  FaFolderPlus, 
+  FaEllipsisH, 
+  FaTrash, 
+  FaDownload, 
+  FaExternalLinkAlt, 
+  FaPencilAlt 
+} from 'react-icons/fa';
 import axios from 'axios';
 
+const axiosInstance = axios.create({
+  baseURL: 'http://localhost:8000', // Asegúrate de que este sea el puerto correcto de tu backend
+});
+
 const Documentos = () => {
+  // Estado para documentos
   const [documents, setDocuments] = useState([
     { folder: 'Cerrados', doc: 'Informe Dimensiones', client: 'ACME', date: '2022-01-23', type: 'Informe' },
-    { folder: 'En Etapa 3', doc: 'Plano 3D', client: 'Coliseo Metropolitano', date: '2024-01-09', type: 'Plano' },
-    { folder: 'Activos', doc: 'Análisis Financiero', client: 'Global Corp', date: '2023-08-15', type: 'Informe' },
-    { folder: 'Finalizados', doc: 'Especificaciones Técnicas', client: 'Industrias Químicas', date: '2023-11-02', type: 'Manual' },
-    { folder: 'Recientes', doc: 'Memoria de Cálculo', client: 'Inmobiliaria Sur', date: '2023-09-18', type: 'Informe' },
-    { folder: 'En Proceso', doc: 'Maqueta VR', client: 'Museo Nacional', date: '2024-03-10', type: 'Plano' },
+    // ... otros documentos
   ]);
 
+  // Estados para búsqueda y ordenación
   const [searchTerm, setSearchTerm] = useState('');
   const [isSortedAlphabetically, setIsSortedAlphabetically] = useState(false);
   const [isSortedByDate, setIsSortedByDate] = useState(false);
+
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedFile, setUploadedFile] = useState([]);
+  // Aquí solo usamos uploadedFiles (un array) para todos los archivos
+
 
   // Estados para modales
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [showUploadDocumentModal, setShowUploadDocumentModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [selectedProject, setSelectedProject] = useState('');
+  const [selectedProject, setSelectedProject] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState('');
   const [selectedDocumentType, setSelectedDocumentType] = useState('');
-  const [uploadedFile, setUploadedFile] = useState(null);
-
-  const [proyectos, setProyectos] = useState([]);
+  const [foldersForSelectedProject, setFoldersForSelectedProject] = useState([]);
   const [carpetas, setCarpetas] = useState([]);
 
+
+  // Estado para proyectos
+  const [proyectos, setProyectos] = useState([]);
+
+  // Estados para mensajes de éxito/error
+  const [message, setMessage] = useState('');
+  const [showMessage, setShowMessage] = useState(false);
+  const [messageVariant, setMessageVariant] = useState('success'); // 'success', 'info' o 'danger'
+
+  // Fetch de proyectos desde la API
   useEffect(() => {
-    // Cargar solo los títulos de los proyectos desde el backend
     const fetchProjectTitles = async () => {
-        try {
-            const response = await axios.get('http://localhost:8000/api/projects/titles/');
-            setProyectos(response.data);
-        } catch (error) {
-            console.error("Error al obtener los proyectos:", error);
-        }
+      try {
+        const response = await axiosInstance.get('/api/projects/titles/');
+        console.log('Proyectos obtenidos:', response.data); // Depuración
+        setProyectos(response.data);
+      } catch (error) {
+        console.error("Error al obtener los proyectos:", error);
+        setMessage("Error al obtener los proyectos.");
+        setMessageVariant('danger');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000);
+      }
     };
     fetchProjectTitles();
-}, []);
+  }, []);
 
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const response = await axiosInstance.get('/api/api_file/');
+        setDocuments(response.data);
+      } catch (error) {
+        console.error("Error al obtener los documentos:", error);
+        setMessage("Error al obtener los documentos.");
+        setMessageVariant('danger');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000);
+      }
+    };
+    fetchDocuments();
+  }, []);
+
+  // Fetch de carpetas cuando se selecciona un proyecto
+  useEffect(() => {
+    const fetchFolders = async () => {
+      if (selectedProject && selectedProject.id) {
+        try {
+          const response = await axiosInstance.get(`/api/proyectos/${selectedProject.id}/carpetas/`);
+          console.log('Carpetas obtenidas:', response.data); // Depuración
+          setFoldersForSelectedProject(response.data);
+          if (response.data.length === 0) {
+            setMessage("No hay carpetas para este proyecto.");
+            setMessageVariant('info');
+            setShowMessage(true);
+            setTimeout(() => setShowMessage(false), 3000);
+          }
+        } catch (error) {
+          console.error('Error al obtener carpetas:', error);
+          setMessage("Error al obtener las carpetas del proyecto seleccionado.");
+          setMessageVariant('danger');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 3000);
+        }
+      } else {
+        setFoldersForSelectedProject([]);
+      }
+    };
+    fetchFolders();
+  }, [selectedProject]); // Solo depende de selectedProject
+
+
+
+  // Manejar cambio de proyecto
+  const handleProjectChange = (event) => {
+    const projectId = event.target.value;
+    const selected = proyectos.find(proyecto => proyecto.id === parseInt(projectId));
+    setSelectedProject(selected || null);
+    setSelectedFolder(''); // Resetear carpeta seleccionada al cambiar de proyecto
+    console.log('Proyecto seleccionado:', selected); // Depuración
+  };
+
+  // Manejar cambio de carpeta
+  const handleFolderChange = (e) => {
+    setSelectedFolder(e.target.value);
+  };
+
+   // Documentos.js
+
+   // Actualizar esta función para usar uploadedFiles
+   // Función para confirmar la subida de documentos
+// Función para confirmar la subida
+const handleConfirmUpload = async () => {
+  // Verificar si hay carpeta seleccionada y archivos añadidos
+  console.log(selectedFolder);
+  console.log(uploadedFiles.length);
+  if (selectedFolder && uploadedFiles.length > 0) {
+    try {
+      const formData = new FormData();
+      formData.append('folder_id', selectedFolder);
+      uploadedFiles.forEach(file => {
+        formData.append('files', file);
+      });
+
+      const response = await axiosInstance.post('/api/upload-files/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (response.status === 200) {
+        setMessage('Documento(s) subido(s) con éxito.');
+        setMessageVariant('success');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000);
+
+        // Actualizar el estado de documentos (asumiendo que response.data.uploaded_files contiene la info)
+        const newUploadedFiles = response.data.uploaded_files.map(file => ({
+          folder: selectedFolder,
+          doc: file.name,
+          client: 'Cliente X',
+          date: new Date().toISOString().split('T')[0],
+          type: selectedDocumentType,
+        }));
+        setDocuments((prevDocs) => [...prevDocs, ...newUploadedFiles]);
+
+        // Cerrar el modal y resetear estados
+        closeUploadDocumentModal();
+      } else {
+        setMessage('Error al subir el(los) documento(s).');
+        setMessageVariant('danger');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000);
+      }
+    } catch (error) {
+      console.error("Error al subir el(los) documento(s):", error.response ? error.response.data : error.message);
+      setMessage(error.response?.data?.error || "Ocurrió un error al subir el(los) documento(s).");
+      setMessageVariant('danger');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 3000);
+    }
+  } else {
+    // Si llega aquí es porque no se seleccionó carpeta o no hay archivos agregados
+    alert('Selecciona una carpeta y uno o más archivos para subir.');
+  }
+};
+  
+
+  // Ordenar alfabéticamente
   const handleSortAlphabetically = () => {
     const sortedDocuments = [...documents].sort((a, b) =>
       isSortedAlphabetically
@@ -62,6 +210,7 @@ const Documentos = () => {
     setIsSortedByDate(false);
   };
 
+  // Ordenar por fecha
   const handleSortByDate = () => {
     const sortedDocuments = [...documents].sort((a, b) =>
       isSortedByDate ? new Date(a.date) - new Date(b.date) : new Date(b.date) - new Date(a.date)
@@ -71,6 +220,7 @@ const Documentos = () => {
     setIsSortedAlphabetically(false);
   };
 
+  // Manejar búsqueda
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -78,87 +228,79 @@ const Documentos = () => {
   const handleUploadDocument = (docType) => {
     setSelectedDocumentType(docType);
     setShowUploadDocumentModal(true);
-  };
-
-  const handleFileDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    setUploadedFile(file);
-  };
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    setUploadedFile(file);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-
-  const closeUploadDocumentModal = () => {
-    setUploadedFile(null);
+    setSelectedProject(null);
     setSelectedFolder('');
-    setShowUploadDocumentModal(false);
+    setUploadedFiles([]); // Reiniciar la lista al abrir el modal
   };
 
-  const handleConfirmUpload = () => {
-    if (selectedFolder && uploadedFile) {
-      const newDocument = {
-        folder: selectedFolder,
-        doc: uploadedFile.name,
-        client: 'Cliente X',
-        date: new Date().toISOString().split('T')[0],
-        type: selectedDocumentType,
-      };
-      setDocuments([...documents, newDocument]);
-      closeUploadDocumentModal();
-    } else {
-      alert('Selecciona una carpeta y un archivo para subir.');
-    }
-  };
-
-const [message, setMessage] = useState('');  // Estado para el mensaje
-const [showMessage, setShowMessage] = useState(false);  // Estado para controlar la visibilidad del mensaje
-
-const handleCreateFolder = async () => {
-  if (newFolderName && selectedProject) {
-    const projectName = proyectos.find((p) => p.id === parseInt(selectedProject))?.name || '';
-    const newFolder = `${projectName}/${newFolderName}`;
-
-    try {
-      // Realiza la solicitud al backend para crear la carpeta
-      const response = await axios.post('http://localhost:8000/api/create-folder/', {
-        folder_name: newFolder,
-        project_id: selectedProject, // Asegúrate de enviar el project_id también
-      });
-
-      if (response.status === 201) {
-        alert(`Carpeta '${newFolder}' creada con éxito.`);
-
-        // Actualiza las carpetas y cierra el modal
-        setCarpetas([...carpetas, newFolder]);
-        setShowCreateFolderModal(false);
-        setNewFolderName('');
-        setSelectedProject('');
-
-        // Mostrar el mensaje de éxito
-        setMessage('Carpeta creada con éxito.');
-        setShowMessage(true);
-
-        // Ocultar el mensaje después de 3 segundos
-        setTimeout(() => setShowMessage(false), 3000);
-      } else {
-        console.error("Error al crear la carpeta: ", response);
-      }
-    } catch (error) {
-      console.error("Error al crear la carpeta:", error.response ? error.response.data : error.message);
-      alert("Ocurrió un error al crear la carpeta. Verifica los detalles.");
-    }
-  } else {
-    alert('Selecciona un proyecto y escribe un nombre para la carpeta.');
-  }
+// Manejar arrastrar sobre el área (para evitar comportamiento por defecto)
+const handleDragOver = (e) => {
+  e.preventDefault();
 };
 
+// Cuando selecciones archivos desde el input
+const handleFileSelect = (e) => {
+  const files = Array.from(e.target.files);
+  setUploadedFiles((prevFiles) => [...prevFiles, ...files]);
+};
+
+// Cuando arrastres y sueltes archivos en el área
+const handleFileDrop = (e) => {
+  e.preventDefault();
+  const files = Array.from(e.dataTransfer.files);
+  setUploadedFiles((prevFiles) => [...prevFiles, ...files]);
+};
+
+ // Cerrar modal de subir documento
+const closeUploadDocumentModal = () => {
+  setUploadedFiles([]); // Vaciar la lista de archivos al cerrar el modal
+  setSelectedFolder('');
+  setSelectedProject(null);
+  setSelectedDocumentType('');
+  setShowUploadDocumentModal(false);
+};
+
+
+  const handleCreateFolder = async () => {
+    if (newFolderName && selectedProject) {
+      const projectName = proyectos.find((p) => p.id === parseInt(selectedProject))?.name || '';
+      const newFolder = `${projectName}/${newFolderName}`;
+  
+      try {
+        // Realiza la solicitud al backend para crear la carpeta
+        const response = await axios.post('http://localhost:8000/api/create-folder/', {
+          folder_name: newFolder,
+          project_id: selectedProject, // Asegúrate de enviar el project_id también
+        });
+  
+        if (response.status === 201) {
+          alert(`Carpeta '${newFolder}' creada con éxito.`);
+  
+          // Actualiza las carpetas y cierra el modal
+          setCarpetas([...carpetas, newFolder]);
+          setShowCreateFolderModal(false);
+          setNewFolderName('');
+          setSelectedProject('');
+  
+          // Mostrar el mensaje de éxito
+          setMessage('Carpeta creada con éxito.');
+          setShowMessage(true);
+  
+          // Ocultar el mensaje después de 3 segundos
+          setTimeout(() => setShowMessage(false), 3000);
+        } else {
+          console.error("Error al crear la carpeta: ", response);
+        }
+      } catch (error) {
+        console.error("Error al crear la carpeta:", error.response ? error.response.data : error.message);
+        alert("Ocurrió un error al crear la carpeta. Verifica los detalles.");
+      }
+    } else {
+      alert('Selecciona un proyecto y escribe un nombre para la carpeta.');
+    }
+  };
+
+  // Filtrar documentos según búsqueda
   const filteredDocuments = documents.filter((doc) =>
     doc.doc.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -166,16 +308,33 @@ const handleCreateFolder = async () => {
   return (
     <div className="documentos-app d-flex">
       <Col xs={12} className="main-content p-4">
+        {/* Mensajes de alerta */}
+        {showMessage && (
+          <Alert variant={messageVariant} onClose={() => setShowMessage(false)} dismissible>
+            {message}
+          </Alert>
+        )}
+
+        {/* Título */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h1 className="mb-0">Administración Documentos</h1>
         </div>
 
+        {/* Botones de Ordenación y Subida de Documentos */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <Button variant="outline-secondary" className="me-2" onClick={handleSortAlphabetically}>
+            <Button 
+              variant="outline-secondary" 
+              className="me-2" 
+              onClick={handleSortAlphabetically}
+            >
               Ordenar {isSortedAlphabetically ? 'Z-A' : 'A-Z'}
             </Button>
-            <Button variant="outline-secondary" className="me-2" onClick={handleSortByDate}>
+            <Button 
+              variant="outline-secondary" 
+              className="me-2" 
+              onClick={handleSortByDate}
+            >
               Ordenar por Fecha {isSortedByDate ? 'Ascendente' : 'Descendente'}
             </Button>
             <Dropdown>
@@ -190,21 +349,26 @@ const handleCreateFolder = async () => {
               </Dropdown.Menu>
             </Dropdown>
           </div>
-          <Button variant="dark" onClick={() => setShowCreateFolderModal(true)}>
-            <FaFolderPlus /> Crear carpeta
+          <Button 
+            variant="outline-primary" 
+            onClick={() => setShowCreateFolderModal(true)}
+          >
+            <FaFolderPlus /> Crear Carpeta
           </Button>
         </div>
 
+        {/* Campo de Búsqueda */}
         <div className="search-container mb-4">
           <Form.Control
             type="text"
-            placeholder="Buscar Doc"
+            placeholder="Buscar Documento"
             className="search-input"
             value={searchTerm}
             onChange={handleSearch}
           />
         </div>
 
+        {/* Tabla de Documentos */}
         <Card>
           <Card.Body>
             <div className="table-scroll">
@@ -300,21 +464,43 @@ const handleCreateFolder = async () => {
             <Modal.Title>Subir {selectedDocumentType}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
+            {/* Seleccionar Proyecto */}
             <Form.Group>
-              <Form.Label>Seleccionar Carpeta</Form.Label>
-              <Form.Control
-                as="select"
-                value={selectedFolder}
-                onChange={(e) => setSelectedFolder(e.target.value)}
+              <Form.Label>Seleccionar Proyecto</Form.Label>
+              <Form.Control 
+                as="select" 
+                value={selectedProject?.id || ''} 
+                onChange={handleProjectChange}
               >
-                <option value="">Selecciona una carpeta</option>
-                {carpetas.map((folder, index) => (
-                  <option key={index} value={folder}>
-                    {folder}
-                  </option>
-                ))}
+                <option value="">Seleccionar Proyecto</option>
+                {proyectos.map((proyecto) => (
+                    <option key={proyecto.id} value={proyecto.id}>
+                      {proyecto.name}
+                    </option>
+                  ))}
               </Form.Control>
             </Form.Group>
+
+            {/* Seleccionar Carpeta */}
+            {selectedProject && (
+              <Form.Group className="mt-3">
+                <Form.Label>Seleccionar Carpeta</Form.Label>
+                <Form.Control 
+                  as="select" 
+                  value={selectedFolder} 
+                  onChange={handleFolderChange}
+                >
+                  <option value="">Seleccionar Carpeta</option>
+                  {foldersForSelectedProject.map((folder) => (
+                  <option key={folder.id} value={folder.folder_id}>
+                    {folder.folder_name}
+                  </option>
+                ))}
+                </Form.Control>
+              </Form.Group>
+            )}
+
+            {/* Área de Subida de Archivo */}
             <div
               onDrop={handleFileDrop}
               onDragOver={handleDragOver}
@@ -332,7 +518,15 @@ const handleCreateFolder = async () => {
               ) : (
                 <p>Arrastra un archivo aquí o haz clic para seleccionar</p>
               )}
-              <Form.Control type="file" onChange={handleFileSelect} style={{ display: 'none' }} />
+              <Form.Control 
+                type="file" 
+                onChange={handleFileSelect} 
+                style={{ display: 'none' }} 
+                id="file-upload"
+              />
+              <label htmlFor="file-upload" style={{ cursor: 'pointer', display: 'block', marginTop: '10px' }}>
+                <Button variant="secondary">Seleccionar Archivo</Button>
+              </label>
             </div>
           </Modal.Body>
           <Modal.Footer>
@@ -340,11 +534,12 @@ const handleCreateFolder = async () => {
               Cancelar
             </Button>
             <Button variant="primary" onClick={handleConfirmUpload}>
-              Subir Documento
+              Subir Documento(s)
             </Button>
           </Modal.Footer>
         </Modal>
 
+        {/* Footer */}
         <footer className="mt-4 footer-img-container">
           <img src="/logo.png" alt="Footer Logo" className="footer-img" />
         </footer>
