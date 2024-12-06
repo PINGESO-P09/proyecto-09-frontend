@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './Documentos.css';
 import {
   Button,
@@ -20,6 +20,7 @@ import {
   FaPencilAlt 
 } from 'react-icons/fa';
 import axios from 'axios';
+import { useDropzone } from 'react-dropzone'; // Importar useDropzone
 
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:8000', // Asegúrate de que este sea el puerto correcto de tu backend
@@ -37,10 +38,13 @@ const Documentos = () => {
   const [isSortedAlphabetically, setIsSortedAlphabetically] = useState(false);
   const [isSortedByDate, setIsSortedByDate] = useState(false);
 
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [uploadedFile, setUploadedFile] = useState([]);
-  // Aquí solo usamos uploadedFiles (un array) para todos los archivos
+  const [uploadedFiles, setUploadedFiles] = useState([]); // Manejar múltiples archivos
 
+  // Estado para controlar si se está subiendo
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Estado para controlar si se está creando una carpeta
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 
   // Estados para modales
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
@@ -48,10 +52,8 @@ const Documentos = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState('');
-  const [selectedDocumentType, setSelectedDocumentType] = useState('');
   const [foldersForSelectedProject, setFoldersForSelectedProject] = useState([]);
   const [carpetas, setCarpetas] = useState([]);
-
 
   // Estado para proyectos
   const [proyectos, setProyectos] = useState([]);
@@ -79,6 +81,7 @@ const Documentos = () => {
     fetchProjectTitles();
   }, []);
 
+  // Fetch de documentos desde la API
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
@@ -123,8 +126,6 @@ const Documentos = () => {
     fetchFolders();
   }, [selectedProject]); // Solo depende de selectedProject
 
-
-
   // Manejar cambio de proyecto
   const handleProjectChange = (event) => {
     const projectId = event.target.value;
@@ -139,64 +140,73 @@ const Documentos = () => {
     setSelectedFolder(e.target.value);
   };
 
-   // Documentos.js
+  // Manejar subida de archivos con react-dropzone
+  const onDrop = useCallback((acceptedFiles) => {
+    setUploadedFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+  }, []);
 
-   // Actualizar esta función para usar uploadedFiles
-   // Función para confirmar la subida de documentos
-// Función para confirmar la subida
-const handleConfirmUpload = async () => {
-  // Verificar si hay carpeta seleccionada y archivos añadidos
-  console.log(selectedFolder);
-  console.log(uploadedFiles.length);
-  if (selectedFolder && uploadedFiles.length > 0) {
-    try {
-      const formData = new FormData();
-      formData.append('folder_id', selectedFolder);
-      uploadedFiles.forEach(file => {
-        formData.append('files', file);
-      });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+    onDrop,
+    accept: '*/*', // Acepta cualquier tipo de archivo
+    multiple: true
+  });
 
-      const response = await axiosInstance.post('/api/upload-files/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+  // Función para confirmar la subida de documentos
+  const handleConfirmUpload = async () => {
+    // Verificar si hay carpeta seleccionada y archivos añadidos
+    console.log(selectedFolder);
+    console.log(uploadedFiles.length);
+    if (selectedFolder && uploadedFiles.length > 0) {
+      setIsUploading(true); // Iniciar el proceso de subida
+      try {
+        const formData = new FormData();
+        formData.append('folder_id', selectedFolder);
+        uploadedFiles.forEach(file => {
+          formData.append('files', file);
+        });
 
-      if (response.status === 200) {
-        setMessage('Documento(s) subido(s) con éxito.');
-        setMessageVariant('success');
-        setShowMessage(true);
-        setTimeout(() => setShowMessage(false), 3000);
+        const response = await axiosInstance.post('/api/upload-drive-files/', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
 
-        // Actualizar el estado de documentos (asumiendo que response.data.uploaded_files contiene la info)
-        const newUploadedFiles = response.data.uploaded_files.map(file => ({
-          folder: selectedFolder,
-          doc: file.name,
-          client: 'Cliente X',
-          date: new Date().toISOString().split('T')[0],
-          type: selectedDocumentType,
-        }));
-        setDocuments((prevDocs) => [...prevDocs, ...newUploadedFiles]);
+        if (response.status === 200) {
+          setMessage('Archivo(s) subido(s) con éxito.');
+          setMessageVariant('success');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 3000);
 
-        // Cerrar el modal y resetear estados
-        closeUploadDocumentModal();
-      } else {
-        setMessage('Error al subir el(los) documento(s).');
+          // Actualizar el estado de documentos (asumiendo que response.data.uploaded_files contiene la info)
+          const newUploadedFiles = response.data.uploaded_files.map(file => ({
+            folder: selectedFolder,
+            doc: file.name,
+            client: 'Cliente X',
+            date: new Date().toISOString().split('T')[0],
+            type: 'Archivo', // Tipo genérico
+          }));
+          setDocuments((prevDocs) => [...prevDocs, ...newUploadedFiles]);
+
+          // Cerrar el modal y resetear estados
+          closeUploadDocumentModal();
+        } else {
+          setMessage('Error al subir el(los) archivo(s).');
+          setMessageVariant('danger');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 3000);
+        }
+      } catch (error) {
+        console.error("Error al subir el(los) archivo(s):", error.response ? error.response.data : error.message);
+        setMessage(error.response?.data?.error || "Ocurrió un error al subir el(los) archivo(s).");
         setMessageVariant('danger');
         setShowMessage(true);
         setTimeout(() => setShowMessage(false), 3000);
+      } finally {
+        setIsUploading(false); // Finalizar el proceso de subida
       }
-    } catch (error) {
-      console.error("Error al subir el(los) documento(s):", error.response ? error.response.data : error.message);
-      setMessage(error.response?.data?.error || "Ocurrió un error al subir el(los) documento(s).");
-      setMessageVariant('danger');
-      setShowMessage(true);
-      setTimeout(() => setShowMessage(false), 3000);
+    } else {
+      // Si llega aquí es porque no se seleccionó carpeta o no hay archivos agregados
+      alert('Selecciona una carpeta y uno o más archivos para subir.');
     }
-  } else {
-    // Si llega aquí es porque no se seleccionó carpeta o no hay archivos agregados
-    alert('Selecciona una carpeta y uno o más archivos para subir.');
-  }
-};
-  
+  };
 
   // Ordenar alfabéticamente
   const handleSortAlphabetically = () => {
@@ -225,75 +235,65 @@ const handleConfirmUpload = async () => {
     setSearchTerm(e.target.value);
   };
 
-  const handleUploadDocument = (docType) => {
-    setSelectedDocumentType(docType);
+  const handleUploadDocument = () => { // Eliminamos el parámetro docType
     setShowUploadDocumentModal(true);
     setSelectedProject(null);
     setSelectedFolder('');
     setUploadedFiles([]); // Reiniciar la lista al abrir el modal
   };
 
-// Manejar arrastrar sobre el área (para evitar comportamiento por defecto)
-const handleDragOver = (e) => {
-  e.preventDefault();
-};
-
-// Cuando selecciones archivos desde el input
-const handleFileSelect = (e) => {
-  const files = Array.from(e.target.files);
-  setUploadedFiles((prevFiles) => [...prevFiles, ...files]);
-};
-
-// Cuando arrastres y sueltes archivos en el área
-const handleFileDrop = (e) => {
-  e.preventDefault();
-  const files = Array.from(e.dataTransfer.files);
-  setUploadedFiles((prevFiles) => [...prevFiles, ...files]);
-};
-
- // Cerrar modal de subir documento
-const closeUploadDocumentModal = () => {
-  setUploadedFiles([]); // Vaciar la lista de archivos al cerrar el modal
-  setSelectedFolder('');
-  setSelectedProject(null);
-  setSelectedDocumentType('');
-  setShowUploadDocumentModal(false);
-};
-
+  // Cerrar modal de subir documento
+  const closeUploadDocumentModal = () => {
+    setUploadedFiles([]); // Vaciar la lista de archivos al cerrar el modal
+    setSelectedFolder('');
+    setSelectedProject(null);
+    setShowUploadDocumentModal(false);
+  };
 
   const handleCreateFolder = async () => {
     if (newFolderName && selectedProject) {
-      const projectName = proyectos.find((p) => p.id === parseInt(selectedProject))?.name || '';
+      setIsCreatingFolder(true); // Iniciar el proceso de creación de carpeta
+      const projectName = proyectos.find((p) => p.id === parseInt(selectedProject.id))?.name || '';
       const newFolder = `${projectName}/${newFolderName}`;
-  
+
       try {
         // Realiza la solicitud al backend para crear la carpeta
         const response = await axios.post('http://localhost:8000/api/create-folder/', {
           folder_name: newFolder,
-          project_id: selectedProject, // Asegúrate de enviar el project_id también
+          project_id: selectedProject.id, // Enviar el project_id correctamente
         });
-  
+
         if (response.status === 201) {
           alert(`Carpeta '${newFolder}' creada con éxito.`);
-  
+
           // Actualiza las carpetas y cierra el modal
           setCarpetas([...carpetas, newFolder]);
           setShowCreateFolderModal(false);
           setNewFolderName('');
-          setSelectedProject('');
-  
+          setSelectedProject(null);
+
           // Mostrar el mensaje de éxito
           setMessage('Carpeta creada con éxito.');
+          setMessageVariant('success');
           setShowMessage(true);
-  
+
           // Ocultar el mensaje después de 3 segundos
           setTimeout(() => setShowMessage(false), 3000);
         } else {
           console.error("Error al crear la carpeta: ", response);
+          setMessage("Error al crear la carpeta.");
+          setMessageVariant('danger');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 3000);
         }
       } catch (error) {
         console.error("Error al crear la carpeta:", error.response ? error.response.data : error.message);
-        alert("Ocurrió un error al crear la carpeta. Verifica los detalles.");
+        setMessage("Ocurrió un error al crear la carpeta. Verifica los detalles.");
+        setMessageVariant('danger');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000);
+      } finally {
+        setIsCreatingFolder(false); // Finalizar el proceso de creación de carpeta
       }
     } else {
       alert('Selecciona un proyecto y escribe un nombre para la carpeta.');
@@ -339,21 +339,19 @@ const closeUploadDocumentModal = () => {
             </Button>
             <Dropdown>
               <Dropdown.Toggle variant="secondary" id="dropdown-basic">
-                <FaUpload /> Subir documento
+                <FaUpload /> Subir archivo
               </Dropdown.Toggle>
               <Dropdown.Menu>
-                <Dropdown.Item onClick={() => handleUploadDocument('Informe')}>Informe</Dropdown.Item>
-                <Dropdown.Item onClick={() => handleUploadDocument('Plano')}>Plano</Dropdown.Item>
-                <Dropdown.Item onClick={() => handleUploadDocument('Excel')}>Excel</Dropdown.Item>
-                <Dropdown.Item onClick={() => handleUploadDocument('Presentación')}>Presentación</Dropdown.Item>
+                <Dropdown.Item onClick={handleUploadDocument}>Subir cualquier archivo</Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
           </div>
           <Button 
             variant="outline-primary" 
             onClick={() => setShowCreateFolderModal(true)}
+            disabled={isCreatingFolder} // Deshabilitar durante la creación de carpeta
           >
-            <FaFolderPlus /> Crear Carpeta
+            <FaFolderPlus /> {isCreatingFolder ? 'Creando...' : 'Crear Carpeta'}
           </Button>
         </div>
 
@@ -397,16 +395,16 @@ const closeUploadDocumentModal = () => {
                             <FaEllipsisH />
                           </Dropdown.Toggle>
                           <Dropdown.Menu>
-                            <Dropdown.Item href="#/download">
+                            <Dropdown.Item href={`#download-${doc.id}`}>
                               <FaDownload /> Descargar
                             </Dropdown.Item>
-                            <Dropdown.Item href="#/open">
+                            <Dropdown.Item href={`#open-${doc.id}`}>
                               <FaExternalLinkAlt /> Abrir
                             </Dropdown.Item>
-                            <Dropdown.Item href="#/rename">
+                            <Dropdown.Item href={`#rename-${doc.id}`}>
                               <FaPencilAlt /> Cambiar nombre
                             </Dropdown.Item>
-                            <Dropdown.Item href="#/delete" className="text-danger">
+                            <Dropdown.Item href={`#delete-${doc.id}`} className="text-danger">
                               <FaTrash /> Borrar
                             </Dropdown.Item>
                           </Dropdown.Menu>
@@ -420,48 +418,59 @@ const closeUploadDocumentModal = () => {
           </Card.Body>
         </Card>
 
+        {/* Modal para Crear Carpeta */}
         <Modal show={showCreateFolderModal} onHide={() => setShowCreateFolderModal(false)}>
-            <Modal.Header closeButton>
-              <Modal.Title>Crear Carpeta</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <Form.Group>
-                <Form.Label>Nombre de la Carpeta</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                />
-              </Form.Group>
-              <Form.Group className="mt-3">
-                <Form.Label>Seleccionar Proyecto</Form.Label>
-                <Form.Control
-                  as="select"
-                  value={selectedProject}
-                  onChange={(e) => setSelectedProject(e.target.value)}
-                >
-                  <option value="">Selecciona un proyecto</option>
-                  {proyectos.map((proyecto) => (
-                    <option key={proyecto.id} value={proyecto.id}>
-                      {proyecto.name}
-                    </option>
-                  ))}
-                </Form.Control>
-              </Form.Group>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowCreateFolderModal(false)}>
-                Cancelar
-              </Button>
-              <Button variant="primary" onClick={handleCreateFolder}>
-                Crear Carpeta
-              </Button>
-            </Modal.Footer>
+          <Modal.Header closeButton>
+            <Modal.Title>Crear Carpeta</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form.Group>
+              <Form.Label>Nombre de la Carpeta</Form.Label>
+              <Form.Control
+                type="text"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mt-3">
+              <Form.Label>Seleccionar Proyecto</Form.Label>
+              <Form.Control
+                as="select"
+                value={selectedProject ? selectedProject.id : ''}
+                onChange={handleProjectChange}
+                disabled={isCreatingFolder} // Deshabilitar mientras se crea la carpeta
+              >
+                <option value="">Selecciona un proyecto</option>
+                {proyectos.map((proyecto) => (
+                  <option key={proyecto.id} value={proyecto.id}>
+                    {proyecto.name}
+                  </option>
+                ))}
+              </Form.Control>
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button 
+              variant="secondary" 
+              onClick={() => setShowCreateFolderModal(false)}
+              disabled={isCreatingFolder} // Deshabilitar mientras se crea la carpeta
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={handleCreateFolder}
+              disabled={isCreatingFolder} // Deshabilitar durante la creación de carpeta
+            >
+              {isCreatingFolder ? 'Creando...' : 'Crear Carpeta'} {/* Cambiar el texto según el estado */}
+            </Button>
+          </Modal.Footer>
         </Modal>
 
+        {/* Modal para Subir Archivo */}
         <Modal show={showUploadDocumentModal} onHide={closeUploadDocumentModal}>
           <Modal.Header closeButton>
-            <Modal.Title>Subir {selectedDocumentType}</Modal.Title>
+            <Modal.Title>Subir Archivo</Modal.Title> {/* Título actualizado */}
           </Modal.Header>
           <Modal.Body>
             {/* Seleccionar Proyecto */}
@@ -471,13 +480,14 @@ const closeUploadDocumentModal = () => {
                 as="select" 
                 value={selectedProject?.id || ''} 
                 onChange={handleProjectChange}
+                disabled={isUploading} // Deshabilitar mientras se sube
               >
                 <option value="">Seleccionar Proyecto</option>
                 {proyectos.map((proyecto) => (
-                    <option key={proyecto.id} value={proyecto.id}>
-                      {proyecto.name}
-                    </option>
-                  ))}
+                  <option key={proyecto.id} value={proyecto.id}>
+                    {proyecto.name}
+                  </option>
+                ))}
               </Form.Control>
             </Form.Group>
 
@@ -489,21 +499,21 @@ const closeUploadDocumentModal = () => {
                   as="select" 
                   value={selectedFolder} 
                   onChange={handleFolderChange}
+                  disabled={isUploading} // Deshabilitar mientras se sube
                 >
                   <option value="">Seleccionar Carpeta</option>
                   {foldersForSelectedProject.map((folder) => (
-                  <option key={folder.id} value={folder.folder_id}>
-                    {folder.folder_name}
-                  </option>
-                ))}
+                    <option key={folder.id} value={folder.folder_id}>
+                      {folder.folder_name}
+                    </option>
+                  ))}
                 </Form.Control>
               </Form.Group>
             )}
 
-            {/* Área de Subida de Archivo */}
+            {/* Área de Subida de Archivo con react-dropzone */}
             <div
-              onDrop={handleFileDrop}
-              onDragOver={handleDragOver}
+              {...getRootProps()}
               style={{
                 border: '2px dashed #ccc',
                 borderRadius: '5px',
@@ -511,30 +521,44 @@ const closeUploadDocumentModal = () => {
                 textAlign: 'center',
                 marginTop: '20px',
                 cursor: 'pointer',
+                backgroundColor: isDragActive ? '#f0f8ff' : '#fafafa'
               }}
             >
-              {uploadedFile ? (
-                <p>{uploadedFile.name}</p>
-              ) : (
-                <p>Arrastra un archivo aquí o haz clic para seleccionar</p>
-              )}
-              <Form.Control 
-                type="file" 
-                onChange={handleFileSelect} 
-                style={{ display: 'none' }} 
-                id="file-upload"
-              />
-              <label htmlFor="file-upload" style={{ cursor: 'pointer', display: 'block', marginTop: '10px' }}>
-                <Button variant="secondary">Seleccionar Archivo</Button>
-              </label>
+              <input {...getInputProps()} />
+              {
+                isDragActive ?
+                  <p>Suelta los archivos aquí...</p> :
+                  <p>Arrastra uno o más archivos aquí o haz clic para seleccionar</p>
+              }
+              <Button variant="secondary" className="mt-2" disabled={isUploading}>Seleccionar Archivo(s)</Button>
             </div>
+
+            {/* Mostrar la lista de archivos seleccionados */}
+            {uploadedFiles.length > 0 && (
+              <div className="mt-3">
+                <h5>Archivos seleccionados:</h5>
+                <ul>
+                  {uploadedFiles.map((file, index) => (
+                    <li key={index}>{file.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={closeUploadDocumentModal}>
+            <Button 
+              variant="secondary" 
+              onClick={closeUploadDocumentModal}
+              disabled={isUploading} // Deshabilitar mientras se sube
+            >
               Cancelar
             </Button>
-            <Button variant="primary" onClick={handleConfirmUpload}>
-              Subir Documento(s)
+            <Button 
+              variant="primary" 
+              onClick={handleConfirmUpload}
+              disabled={isUploading} // Deshabilitar durante la subida
+            >
+              {isUploading ? 'Subiendo...' : 'Subir Archivo(s)'} {/* Cambiar el texto según el estado */}
             </Button>
           </Modal.Footer>
         </Modal>
