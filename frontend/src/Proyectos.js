@@ -1,23 +1,23 @@
 // Proyectos.js
 
-// Proyectos.js
-
 import React, { useState, useEffect } from 'react';
-import axios from 'axios'; // Importa Axios para realizar solicitudes HTTP
-import './Proyectos.css'; // Asegúrate de que este archivo CSS existe y está correctamente configurado
-import { Button, Card, Table, Form, Modal, Spinner, Alert } from 'react-bootstrap'; // Importa componentes de React Bootstrap
-import { FaEdit, FaTrash } from 'react-icons/fa'; // Importa íconos para botones de acción
+import axios from 'axios'; // Para solicitudes HTTP
+import './Proyectos.css'; // Asegúrate de que este archivo CSS exista y esté correctamente configurado
+import { Button, Card, Table, Form, Modal, Spinner, Alert } from 'react-bootstrap'; // Componentes de React Bootstrap
+import { FaEdit, FaTrash } from 'react-icons/fa'; // Íconos para botones de acción
 
 const Proyectos = () => {
   
-  // Estado para almacenar el proyecto que se está editando
-  const [editingProject, setEditingProject] = useState(null);
+  // Estados para manejar proyectos y carpetas
+  const [proyectos, setProyectos] = useState([]);
+  const [folders, setFolders] = useState([]);
   
-  // Estados para controlar la visibilidad de los modales
+  // Estados para manejar modales
+  const [editingProject, setEditingProject] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   
-  // Estado para manejar los datos del nuevo proyecto que se está creando
+  // Estado para manejar el nuevo proyecto
   const [newProject, setNewProject] = useState({
     titulo: '',
     cliente: '',
@@ -26,82 +26,25 @@ const Proyectos = () => {
     fecha_termino: '',
     estado: '',
     inversion: '',
-    folder_name: '',
   });
 
-  // Estado para almacenar la lista de proyectos obtenidos desde el backend
-  const [proyectos, setProyectos] = useState([]);
-  
-  // Estado para almacenar la lista de documentos (puedes modificar esto para obtenerlos desde el backend si es necesario)
-  const [documents, setDocuments] = useState([
-  ]);
-
-  // Estado para indicar si se está procesando una solicitud (creación o edición de proyecto)
+  // Estado para manejar loading y errores
   const [loading, setLoading] = useState(false);
-
-  // Estado para manejar errores generales
   const [error, setError] = useState(null);
 
-  const [selectedProject, setSelectedProject] = useState('');  // Para almacenar el ID del proyecto
-  const [selectedProjectName, setSelectedProjectName] = useState('');  // Para almacenar el nombre del proyecto
-
+  // Estado para manejar el proyecto seleccionado
+  const [selectedProject, setSelectedProject] = useState('');  // ID del proyecto
+  const [selectedProjectName, setSelectedProjectName] = useState('');  // Nombre del proyecto
 
   /**
-   * Función para generar un nuevo título de proyecto automáticamente.
-   * Asegura que el título sea único incrementando el número hasta encontrar uno disponible.
+   * Función para formatear fechas de manera segura
+   * @param {string} dateString - La cadena de fecha a formatear.
+   * @returns {string} - Fecha formateada o mensaje de error.
    */
-  const generateProjectTitle = () => {
-    console.log("Generando nuevo título de proyecto...");
-    const year = new Date().getFullYear().toString().slice(-2); // Obtiene los dos últimos dígitos del año actual
-    let lastNumber = 1000; // Número inicial si no hay proyectos existentes
-
-    if (proyectos.length > 0) {
-      // Extrae los números de los títulos existentes
-      const numbers = proyectos
-        .map(proj => {
-          const parts = proj.titulo.split('/');
-          const number = parts.length === 3 ? parseInt(parts[1], 10) : null;
-          console.log(`Proyecto existente: ${proj.titulo} - Número extraído: ${number}`);
-          return number;
-        })
-        .filter(n => !isNaN(n));
-
-      if (numbers.length > 0) {
-        lastNumber = Math.max(...numbers);
-        console.log(`Último número de proyecto encontrado: ${lastNumber}`);
-      }
-    }
-
-    let newNumber = lastNumber + 1;
-    let newTitulo = `IN/${newNumber}/${year}`;
-    console.log(`Título de proyecto generado inicialmente: ${newTitulo}`);
-    
-    // Verifica si el título ya existe y, de ser así, incrementa hasta encontrar uno único
-    while (proyectos.some(proj => proj.titulo === newTitulo)) {
-      console.log(`El título ${newTitulo} ya existe. Incrementando número...`);
-      newNumber += 1;
-      newTitulo = `IN/${newNumber}/${year}`;
-      console.log(`Nuevo título de proyecto generado: ${newTitulo}`);
-    }
-
-    console.log(`Título de proyecto final generado: ${newTitulo}`);
-    return newTitulo;
-  };
-
-  const handleOpenNewProjectModal = () => {
-    console.log("Abriendo modal para nuevo proyecto...");
-    setNewProject({
-      titulo: '', // Titulo vacío para que el usuario lo ingrese
-      cliente: '',
-      correo: '',
-      fecha_inicio: '',
-      fecha_termino: '',
-      estado: '',
-      inversion: '',
-      folder_name: '',
-    });
-    setShowNewProjectModal(true); // Muestra el modal
-    console.log("Modal para nuevo proyecto abierto.");
+  const formatDate = (dateString) => {
+    if (!dateString) return "Sin fecha";
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? "Fecha Inválida" : date.toLocaleDateString('es-ES');
   };
 
   /**
@@ -113,23 +56,22 @@ const Proyectos = () => {
         const accessToken = localStorage.getItem("accessToken"); // Obtener el token de acceso
 
         if (!accessToken) {
-          console.error("No token found");
-          setError("No token found. Please log in again.");
+          console.error("No se encontró el token de acceso.");
+          setError("No se encontró el token de acceso. Por favor, inicia sesión nuevamente.");
           return;
         }
 
-        console.log("Token de acceso obtenido:", accessToken);
-
-        // Realiza la solicitud GET al backend con el token en la cabecera Authorization
+        // Solicitud GET para obtener proyectos
         const response = await axios.get('http://localhost:8000/api/projects/', {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,  // Token enviado aquí
+            'Authorization': `Bearer ${accessToken}`,
           }
         });
 
-        console.log("Respuesta de la API:", response.data); // Log para depuración
+        console.log("Proyectos obtenidos:", response.data); // Log para depuración
 
+        // Ajusta según la estructura de tu API
         if (response.data.results) {
           setProyectos(response.data.results);
         } else {
@@ -137,7 +79,6 @@ const Proyectos = () => {
         }
       } catch (error) {
         console.error("Error al obtener los proyectos:", error.response || error.message);
-        console.log("Detalles del error:", error); // Log adicional para depuración
         setError("No se pudieron obtener los proyectos. Revisa la consola para más detalles.");
       }
     };
@@ -145,191 +86,216 @@ const Proyectos = () => {
     fetchProyectos();
   }, []);
 
- /**
- * Función para manejar la creación de un nuevo proyecto.
- * Envía una solicitud POST al backend para crear el proyecto.
- */
-const handleSaveNewProject = async () => {
-  console.log("Intentando guardar un nuevo proyecto...");
-
-  // Validación básica de campos obligatorios
-  if (
-    newProject.titulo &&
-    newProject.cliente &&
-    newProject.fecha_inicio &&
-    newProject.fecha_termino &&
-    newProject.estado
-  ) {
-    console.log("Todos los campos obligatorios están completos.");
-    setLoading(true); // Indica que se está procesando la solicitud
-
-    // Validación extra: Asegúrate de que las fechas sean válidas y la inversión esté en formato numérico
-    const isValidFechaInicio = !isNaN(new Date(newProject.fecha_inicio).getTime());
-    const isValidFechaTermino = !isNaN(new Date(newProject.fecha_termino).getTime());
-    const isValidInversion = !isNaN(parseFloat(newProject.inversion));
-
-    if (!isValidFechaInicio || !isValidFechaTermino) {
-      alert("Las fechas de inicio y término deben tener un formato válido.");
-      setLoading(false);
-      return;
-    }
-
-    if (!isValidInversion) {
-      alert("La inversión debe ser un número válido.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      console.log("Enviando solicitud POST a 'http://localhost:8000/api/create-project/' con los datos del proyecto...");
-      console.log("Datos del nuevo proyecto:", newProject);
-
-      // Realiza una solicitud POST al backend para crear el proyecto
-      const response = await axios.post('http://localhost:8000/api/create-project/', {
-        titulo: newProject.titulo,
-        cliente: newProject.cliente,
-        correo: newProject.correo,
-        fecha_inicio: newProject.fecha_inicio,
-        fecha_termino: newProject.fecha_termino,
-        estado: newProject.estado,
-        inversion: newProject.inversion ? parseFloat(newProject.inversion) : null,
-        // Elimina 'folder_name' de la solicitud
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-      });
-
-      console.log("Respuesta del backend después de crear el proyecto:", response.data);
-
-      if (response.data.project) {
-        console.log("Proyecto creado exitosamente. Actualizando estado de proyectos...");
-        // Añade el nuevo proyecto al estado de proyectos
-        setProyectos([...proyectos, response.data.project]);
-        setShowNewProjectModal(false); // Cierra el modal
-        alert(`Proyecto creado con éxito.`);
-        console.log("Estado de proyectos actualizado y modal cerrado.");
-      } else {
-        console.warn("La respuesta del backend no contiene 'project'. Verifica los datos enviados.");
-        alert("No se pudo guardar el proyecto. Verifica los datos.");
-      }
-    } catch (error) {
-      console.error("Error al guardar el proyecto:", error.response || error.message);
-      console.log("Detalles del error:", error);
-
-      // Imprime los detalles del error para obtener más información
-      if (error.response && error.response.data) {
-        console.log("Detalles del error del backend:", error.response.data);
-      }
-
-      alert(`Error al guardar el proyecto: ${error.response?.data?.error || error.message}`);
-    } finally {
-      setLoading(false); // Finaliza el estado de carga
-      console.log("Finalizado el proceso de creación del proyecto. Estado de carga:", loading);
-    }
-  } else {
-    console.warn("Faltan campos obligatorios. No se puede guardar el proyecto.");
-    alert("Por favor, completa todos los campos obligatorios.");
-  }
-};
-
-const handleEditProject = (project) => {
-  console.log("Abriendo modal para editar el proyecto:", project);
-  setEditingProject({
-    id: project.id,
-    titulo: project.titulo,  // Asegúrate de que 'titulo' esté incluido aquí
-    cliente: project.cliente,  // Asegúrate de que 'cliente' esté incluido aquí
-    correo: project.correo,
-    fecha_inicio: project.fecha_inicio,
-    fecha_termino: project.fecha_termino,
-    estado: project.estado,
-    inversion: project.inversion,
-    folder_name: project.folder_name,
-  });
-  setShowEditModal(true); // Muestra el modal de edición
-  console.log("Modal de edición abierto.");
-};
-
-
   /**
-   * Función para manejar la eliminación de un proyecto.
-   * @param {number} projectId - El ID del proyecto que se va a eliminar.
+   * useEffect para obtener las carpetas asociadas al proyecto seleccionado.
    */
-  const handleDeleteProject = async (projectId) => {
-    if (window.confirm("¿Seguro que quieres eliminar este proyecto?")) {
-      setLoading(true); // Muestra el indicador de carga
-  
+  useEffect(() => {
+    const fetchFolders = async () => {
       try {
-        const accessToken = localStorage.getItem("accessToken"); // Obtiene el token de acceso
+        const accessToken = localStorage.getItem("accessToken"); // Obtener el token de acceso
+
         if (!accessToken) {
           console.error("No se encontró el token de acceso.");
-          alert("No se encontró el token de acceso.");
+          setError("No se encontró el token de acceso. Por favor, inicia sesión nuevamente.");
           return;
         }
-  
-        // Realiza la solicitud DELETE al backend para eliminar el proyecto
-        const response = await axios.delete(`http://localhost:8000/api/projects/${projectId}/delete/`, {
+
+        let url = '';
+
+        if (selectedProject) {
+          console.log(`Obteniendo carpetas para el proyecto ID: ${selectedProject}`);
+          url = `http://localhost:8000/api/proyectos/${selectedProject}/carpetas/`;
+        } else {
+          console.log("Obteniendo todas las carpetas de todos los proyectos.");
+          url = `http://localhost:8000/api/carpeta/`; // Asegúrate de que este endpoint exista
+        }
+
+        // Solicitud GET para obtener carpetas
+        const response = await axios.get(url, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`, // Incluye el token de acceso en los headers
+            'Authorization': `Bearer ${accessToken}`,
           }
         });
-  
-        if (response.status === 204) {
-          // El proyecto se eliminó con éxito
-          setProyectos(prevProyectos => prevProyectos.filter(proj => proj.id !== projectId)); // Actualiza el estado eliminando el proyecto
-          alert("Proyecto eliminado con éxito.");
-        } else {
-          alert("No se pudo eliminar el proyecto.");
-        }
-      } catch (error) {
-        console.error("Error al eliminar el proyecto:", error.response || error.message);
-        alert("Error al eliminar el proyecto.");
-      } finally {
-        setLoading(false); // Finaliza el estado de carga
-      }
-    }
-  };
 
+        console.log("Carpetas obtenidas:", response.data); // Log para depuración
+
+        setFolders(response.data); // Ajusta según la estructura de tu API
+      } catch (error) {
+        console.error("Error al obtener las carpetas:", error.response || error.message);
+        setError("No se pudieron obtener las carpetas. Revisa la consola para más detalles.");
+      }
+    };
+
+    fetchFolders();
+  }, [selectedProject]);
+
+  /**
+   * Función para manejar la selección de un proyecto
+   */
   const handleSelectProject = (event) => {
     const selected = proyectos.find((p) => p.id === parseInt(event.target.value));
     if (selected) {
       setSelectedProject(selected.id);  // Guarda el ID del proyecto
-      setSelectedProjectName(selected.titulo);  // Guarda el nombre del proyecto (su título)
+      setSelectedProjectName(selected.titulo);  // Guarda el nombre del proyecto
+    } else {
+      setSelectedProject('');
+      setSelectedProjectName('');
     }
   };
-  
-  
 
+  /**
+   * Función para abrir el modal de nuevo proyecto
+   */
+  const handleOpenNewProjectModal = () => {
+    console.log("Abriendo modal para nuevo proyecto...");
+    setNewProject({
+      titulo: '',
+      cliente: '',
+      correo: '',
+      fecha_inicio: '',
+      fecha_termino: '',
+      estado: '',
+      inversion: '',
+    });
+    setShowNewProjectModal(true);
+    console.log("Modal para nuevo proyecto abierto.");
+  };
+
+  /**
+   * Función para guardar un nuevo proyecto
+   */
+  const handleSaveNewProject = async () => {
+    console.log("Intentando guardar un nuevo proyecto...");
+
+    // Validación básica de campos obligatorios
+    if (
+      newProject.titulo &&
+      newProject.cliente &&
+      newProject.fecha_inicio &&
+      newProject.fecha_termino &&
+      newProject.estado
+    ) {
+      console.log("Todos los campos obligatorios están completos.");
+      setLoading(true); // Indica que se está procesando la solicitud
+
+      // Validación extra: Asegúrate de que las fechas sean válidas y la inversión esté en formato numérico
+      const isValidFechaInicio = !isNaN(new Date(newProject.fecha_inicio).getTime());
+      const isValidFechaTermino = !isNaN(new Date(newProject.fecha_termino).getTime());
+      const isValidInversion = !isNaN(parseFloat(newProject.inversion));
+
+      if (!isValidFechaInicio || !isValidFechaTermino) {
+        alert("Las fechas de inicio y término deben tener un formato válido.");
+        setLoading(false);
+        return;
+      }
+
+      if (!isValidInversion) {
+        alert("La inversión debe ser un número válido.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        console.log("Enviando solicitud POST a 'http://localhost:8000/api/create-project/' con los datos del proyecto...");
+        console.log("Datos del nuevo proyecto:", newProject);
+
+        // Solicitud POST para crear proyecto
+        const response = await axios.post('http://localhost:8000/api/create-project/', {
+          titulo: newProject.titulo,
+          cliente: newProject.cliente,
+          correo: newProject.correo,
+          fecha_inicio: newProject.fecha_inicio,
+          fecha_termino: newProject.fecha_termino,
+          estado: newProject.estado,
+          inversion: newProject.inversion ? parseFloat(newProject.inversion) : null,
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
+
+        console.log("Respuesta del backend después de crear el proyecto:", response.data);
+
+        if (response.data.project) {
+          console.log("Proyecto creado exitosamente. Actualizando estado de proyectos...");
+          setProyectos([...proyectos, response.data.project]);
+          setShowNewProjectModal(false);
+          alert("Proyecto creado con éxito.");
+          console.log("Estado de proyectos actualizado y modal cerrado.");
+        } else {
+          console.warn("La respuesta del backend no contiene 'project'. Verifica los datos enviados.");
+          alert("No se pudo guardar el proyecto. Verifica los datos.");
+        }
+      } catch (error) {
+        console.error("Error al guardar el proyecto:", error.response || error.message);
+        console.log("Detalles del error:", error);
+
+        if (error.response && error.response.data) {
+          console.log("Detalles del error del backend:", error.response.data);
+        }
+
+        alert(`Error al guardar el proyecto: ${error.response?.data?.error || error.message}`);
+      } finally {
+        setLoading(false);
+        console.log("Finalizado el proceso de creación del proyecto. Estado de carga:", loading);
+      }
+    } else {
+      console.warn("Faltan campos obligatorios. No se puede guardar el proyecto.");
+      alert("Por favor, completa todos los campos obligatorios.");
+    }
+  };
+
+  /**
+   * Función para manejar la edición de un proyecto
+   */
+  const handleEditProject = (project) => {
+    console.log("Abriendo modal para editar el proyecto:", project);
+    setEditingProject({
+      id: project.id,
+      titulo: project.titulo,
+      cliente: project.cliente,
+      correo: project.correo,
+      fecha_inicio: project.fecha_inicio,
+      fecha_termino: project.fecha_termino,
+      estado: project.estado,
+      inversion: project.inversion,
+    });
+    setShowEditModal(true);
+    console.log("Modal de edición abierto.");
+  };
+
+  /**
+   * Función para guardar los cambios en un proyecto editado
+   */
   const handleSaveProject = async () => {
     console.log("Intentando guardar los cambios en el proyecto:", editingProject);
-  
+
     if (!editingProject || !editingProject.id) {
       console.error("No se ha seleccionado un proyecto para editar.");
       alert("No se ha seleccionado un proyecto válido para editar.");
       return;
     }
-  
+
     // Validación básica de campos obligatorios
     if (
       editingProject.titulo &&
       editingProject.cliente &&
       editingProject.fecha_inicio &&
       editingProject.fecha_termino &&
-      editingProject.estado &&
-      editingProject.folder_name
+      editingProject.estado
     ) {
       console.log("Todos los campos obligatorios están completos para la edición.");
       setLoading(true); // Indica que se está procesando la solicitud
       try {
         console.log(`Realizando solicitud PUT a 'http://localhost:8000/api/projects/${editingProject.id}/' con los datos actualizados...`);
         console.log("Datos actualizados del proyecto:", editingProject);
-  
-        const accessToken = localStorage.getItem("accessToken"); // Obtiene el token de acceso
+
+        const accessToken = localStorage.getItem("accessToken");
         console.log(`Token de acceso para actualización: ${accessToken}`);
-  
-        // Realiza una solicitud PUT al backend para actualizar el proyecto
+
+        // Solicitud PUT para actualizar proyecto
         const response = await axios.put(`http://localhost:8000/api/projects/${editingProject.id}/`, {
           titulo: editingProject.titulo,
           cliente: editingProject.cliente,
@@ -338,26 +304,24 @@ const handleEditProject = (project) => {
           fecha_termino: editingProject.fecha_termino,
           estado: editingProject.estado,
           inversion: editingProject.inversion ? parseFloat(editingProject.inversion) : null,
-          folder_name: editingProject.folder_name,
         }, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`, // Incluye el token en los headers
+            'Authorization': `Bearer ${accessToken}`,
           }
         });
-  
+
         console.log("Respuesta del backend después de actualizar el proyecto:", response.data);
-  
+
         if (response.data) {
           console.log("Proyecto actualizado exitosamente. Actualizando estado de proyectos...");
-          // Actualiza el proyecto en el estado de proyectos
           setProyectos(prevProyectos => {
             const updatedProyectos = prevProyectos.map(proj => 
               proj.id === editingProject.id ? { ...proj, ...response.data } : proj
             );
             return updatedProyectos;
           });
-          setShowEditModal(false); // Cierra el modal de edición
+          setShowEditModal(false);
           alert("Proyecto actualizado exitosamente.");
           console.log("Estado de proyectos actualizado y modal cerrado.");
         } else {
@@ -369,7 +333,7 @@ const handleEditProject = (project) => {
         console.log("Detalles del error:", error);
         alert(`Error al actualizar el proyecto: ${error.response?.data?.error || error.message}`);
       } finally {
-        setLoading(false); // Finaliza el estado de carga
+        setLoading(false);
         console.log("Finalizado el proceso de actualización del proyecto. Estado de carga:", loading);
       }
     } else {
@@ -377,13 +341,93 @@ const handleEditProject = (project) => {
       alert("Por favor, completa todos los campos obligatorios.");
     }
   };
-  
-  
-  /**
-   * Filtra los documentos para mostrar solo los asociados al proyecto seleccionado.
-   */
-  const filteredDocuments = selectedProject ? documents.filter(doc => doc.projectTitle === selectedProject) : documents;
 
+  /**
+   * Función para manejar la eliminación de un proyecto
+   */
+  const handleDeleteProject = async (projectId) => {
+    if (window.confirm("¿Seguro que quieres eliminar este proyecto?")) {
+      setLoading(true); // Muestra el indicador de carga
+  
+      try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+          console.error("No se encontró el token de acceso.");
+          alert("No se encontró el token de acceso.");
+          return;
+        }
+  
+        // Solicitud DELETE para eliminar proyecto
+        const response = await axios.delete(`http://localhost:8000/api/projects/${projectId}/delete/`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          }
+        });
+  
+        if (response.status === 204) {
+          // Elimina el proyecto del estado
+          setProyectos(prevProyectos => prevProyectos.filter(proj => proj.id !== projectId));
+          alert("Proyecto eliminado con éxito.");
+        } else {
+          alert("No se pudo eliminar el proyecto.");
+        }
+      } catch (error) {
+        console.error("Error al eliminar el proyecto:", error.response || error.message);
+        alert("Error al eliminar el proyecto.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  /**
+   * Funciones para manejar carpetas
+   */
+
+  /**
+   * Función para editar una carpeta (Implementa según tus necesidades)
+   */
+  const handleEditFolder = (folder) => {
+    // Implementa la lógica para editar la carpeta
+    console.log("Editar carpeta:", folder);
+    // Por ejemplo, abrir un modal para editar el nombre de la carpeta
+  };
+
+  /**
+   * Función para eliminar una carpeta
+   */
+  const handleDeleteFolder = async (folderId) => {
+    if (window.confirm("¿Seguro que quieres eliminar esta carpeta?")) {
+      try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+          console.error("No se encontró el token de acceso.");
+          setError("No se encontró el token de acceso. Por favor, inicia sesión nuevamente.");
+          return;
+        }
+
+        // Solicitud DELETE para eliminar carpeta
+        const response = await axios.delete(`http://localhost:8000/api/carpeta/${folderId}/`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          }
+        });
+
+        if (response.status === 204) {
+          // Elimina la carpeta del estado
+          setFolders(prevFolders => prevFolders.filter(folder => folder.id !== folderId));
+          alert("Carpeta eliminada con éxito.");
+        } else {
+          alert("No se pudo eliminar la carpeta.");
+        }
+      } catch (error) {
+        console.error("Error al eliminar la carpeta:", error.response || error.message);
+        alert("Error al eliminar la carpeta.");
+      }
+    }
+  };
 
   return (
     <div className="proyectos-app">
@@ -394,30 +438,31 @@ const handleEditProject = (project) => {
           Nuevo Proyecto
         </Button>
       </div>
-  
+
       {/* Mostrar mensaje de error si existe */}
       {error && (
         <Alert variant="danger">
           {error}
         </Alert>
       )}
-  
-          <Form.Group className="mt-3">
-            <Form.Label>Seleccionar Proyecto</Form.Label>
-            <Form.Control
-              as="select"
-              value={selectedProject}
-              onChange={handleSelectProject}
-            >
+
+      {/* Dropdown para seleccionar proyecto */}
+      <Form.Group className="mt-3">
+        <Form.Label>Seleccionar Proyecto</Form.Label>
+        <Form.Control
+          as="select"
+          value={selectedProject}
+          onChange={handleSelectProject}
+        >
           <option value="">Todos los Proyectos</option>
           {proyectos.map(proyecto => (
             <option key={proyecto.id} value={proyecto.id}>
-            {proyecto.titulo} 
-          </option>
+              {proyecto.titulo} 
+            </option>
           ))}
         </Form.Control>
       </Form.Group>
-  
+
       {/* Tabla de lista de proyectos */}
       <Card className="mb-4">
         <Card.Body>
@@ -425,7 +470,7 @@ const handleEditProject = (project) => {
           <Table responsive bordered>
             <thead>
               <tr>
-                <th>Titulo</th>
+                <th>Título</th>
                 <th>Cliente</th>
                 <th>Correo</th>
                 <th>Fecha Inicio</th>
@@ -442,8 +487,8 @@ const handleEditProject = (project) => {
                     <td>{proyecto.titulo}</td>
                     <td>{proyecto.cliente}</td>
                     <td>{proyecto.correo}</td>
-                    <td>{proyecto.fecha_inicio}</td>
-                    <td>{proyecto.fecha_termino}</td>
+                    <td>{formatDate(proyecto.fecha_inicio)}</td>
+                    <td>{formatDate(proyecto.fecha_termino)}</td>
                     <td>{proyecto.estado}</td>
                     <td>${parseFloat(proyecto.inversion).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         
@@ -468,48 +513,64 @@ const handleEditProject = (project) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="text-center">No hay proyectos disponibles.</td>
+                  <td colSpan="8" className="text-center">No hay proyectos disponibles.</td>
                 </tr>
               )}
             </tbody>
           </Table>
         </Card.Body>
       </Card>
-  
-      {/* Tabla de documentos asociados al proyecto seleccionado */}
-        <Card>
-          <Card.Body>
-          <h5>Documentos Asociados al Proyecto {selectedProjectName || "Todos"}</h5>
+
+      {/* Tabla de carpetas asociadas al proyecto seleccionado */}
+      <Card className="mb-4">
+        <Card.Body>
+          <h5>Carpetas Asociadas al Proyecto {selectedProjectName || "Todos"}</h5>
+          <div className="table-responsive">
             <Table responsive bordered>
               <thead>
                 <tr>
-                  <th>Nombre Documento</th>
-                  <th>Título Proyecto</th> {/* Cambié de "Cliente" a "Título Proyecto" */}
-                  <th>Fecha Subido</th>
-                  <th>Tipo</th>
+                  <th>Nombre Carpeta</th>
+                  <th>Fecha Creación</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredDocuments.length > 0 ? (
-                  filteredDocuments.map((doc) => (
-                    <tr key={doc.id}>
-                      <td>{doc.nombre}</td>
-                      {/* Muestra el nombre del proyecto, no el ID */}
-                      <td>{doc.proyecto ? doc.proyecto.titulo : "No asignado"}</td> 
-                      <td>{doc.fecha}</td>
-                      <td>{doc.tipo}</td>
+                {folders.length > 0 ? (
+                  folders.map((folder) => (
+                    <tr key={folder.id}>
+                      <td>{folder.folder_name}</td>
+                      <td>{formatDate(folder.created_at)}</td> {/* Asegúrate de que 'created_at' esté presente */}
+                      <td>
+                        {/* Acciones sobre la carpeta */}
+                        <Button 
+                          variant="warning" 
+                          size="sm" 
+                          className="me-2"
+                          onClick={() => handleEditFolder(folder)}
+                        >
+                          <FaEdit /> Editar
+                        </Button>
+                        <Button 
+                          variant="danger" 
+                          size="sm"
+                          onClick={() => handleDeleteFolder(folder.id)}
+                        >
+                          <FaTrash /> Eliminar
+                        </Button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="text-center">No hay documentos para este proyecto.</td>
+                    <td colSpan="3" className="text-center">No hay carpetas para este proyecto.</td>
                   </tr>
                 )}
               </tbody>
             </Table>
-          </Card.Body>
-        </Card>
-  
+          </div>
+        </Card.Body>
+      </Card>
+
       {/* Modal para crear un nuevo proyecto */}
       <Modal show={showNewProjectModal} onHide={() => setShowNewProjectModal(false)}>
         <Modal.Header closeButton>
@@ -521,11 +582,11 @@ const handleEditProject = (project) => {
               <Spinner animation="border" role="status">
                 <span className="visually-hidden">Creando...</span>
               </Spinner>
-              <p>Creando proyecto y carpeta en Google Drive...</p>
+              <p>Creando proyecto...</p>
             </div>
           ) : (
             <>
-              {/* Campo de título (editable) */}
+              {/* Campo de título */}
               <Form.Group className="mb-3">
                 <Form.Label>Título</Form.Label>
                 <Form.Control 
@@ -539,7 +600,7 @@ const handleEditProject = (project) => {
                   required
                 />
               </Form.Group>
-  
+
               {/* Campo de cliente */}
               <Form.Group className="mb-3">
                 <Form.Label>Cliente</Form.Label>
@@ -554,7 +615,7 @@ const handleEditProject = (project) => {
                   required
                 />
               </Form.Group>
-  
+
               {/* Campo de correo */}
               <Form.Group className="mb-3">
                 <Form.Label>Correo</Form.Label>
@@ -569,7 +630,7 @@ const handleEditProject = (project) => {
                   required
                 />
               </Form.Group>
-  
+
               {/* Campo de fecha de inicio */}
               <Form.Group className="mb-3">
                 <Form.Label>Fecha Inicio</Form.Label>
@@ -583,7 +644,7 @@ const handleEditProject = (project) => {
                   required
                 />
               </Form.Group>
-  
+
               {/* Campo de fecha de término */}
               <Form.Group className="mb-3">
                 <Form.Label>Fecha Término</Form.Label>
@@ -597,7 +658,7 @@ const handleEditProject = (project) => {
                   required
                 />
               </Form.Group>
-  
+
               {/* Campo de estado */}
               <Form.Group className="mb-3">
                 <Form.Label>Estado</Form.Label>
@@ -616,7 +677,7 @@ const handleEditProject = (project) => {
                   <option value="Completado">Completado</option>
                 </Form.Control>
               </Form.Group>
-  
+
               {/* Campo de inversión */}
               <Form.Group className="mb-3">
                 <Form.Label>Inversión</Form.Label>
@@ -643,8 +704,8 @@ const handleEditProject = (project) => {
           }}>
             Cancelar
           </Button>
-  
-          {/* Botón para guardar el nuevo proyecto (solo si no está cargando) */}
+
+          {/* Botón para guardar el nuevo proyecto */}
           {!loading && (
             <Button variant="primary" onClick={handleSaveNewProject}>
               Guardar Proyecto
@@ -652,7 +713,7 @@ const handleEditProject = (project) => {
           )}
         </Modal.Footer>
       </Modal>
-  
+
       {/* Modal para editar un proyecto existente */}
       <Modal show={showEditModal} onHide={() => {
         console.log("Cancelando edición del proyecto.");
@@ -664,11 +725,12 @@ const handleEditProject = (project) => {
         <Modal.Body>
           {editingProject ? (
             <>
+              {/* Campo de título */}
               <Form.Group className="mb-3">
                 <Form.Label>Título</Form.Label>
                 <Form.Control
                   type="text"
-                  value={editingProject.titulo}  // Verifica que 'editingProject.titulo' tiene el valor correcto
+                  value={editingProject.titulo}
                   onChange={(e) => {
                     console.log(`Actualizando título en edición: ${e.target.value}`);
                     setEditingProject({ ...editingProject, titulo: e.target.value });
@@ -677,11 +739,12 @@ const handleEditProject = (project) => {
                 />
               </Form.Group>
 
+              {/* Campo de cliente */}
               <Form.Group className="mb-3">
                 <Form.Label>Cliente</Form.Label>
                 <Form.Control
                   type="text"
-                  value={editingProject.cliente}  // Verifica que 'editingProject.cliente' tiene el valor correcto
+                  value={editingProject.cliente}
                   onChange={(e) => {
                     console.log(`Actualizando cliente en edición: ${e.target.value}`);
                     setEditingProject({ ...editingProject, cliente: e.target.value });
@@ -689,7 +752,7 @@ const handleEditProject = (project) => {
                   required
                 />
               </Form.Group>
-  
+
               {/* Campo de correo */}
               <Form.Group className="mb-3">
                 <Form.Label>Correo</Form.Label>
@@ -703,7 +766,7 @@ const handleEditProject = (project) => {
                   required
                 />
               </Form.Group>
-  
+
               {/* Campo de fecha de inicio */}
               <Form.Group className="mb-3">
                 <Form.Label>Fecha Inicio</Form.Label>
@@ -717,7 +780,7 @@ const handleEditProject = (project) => {
                   required
                 />
               </Form.Group>
-  
+
               {/* Campo de fecha de término */}
               <Form.Group className="mb-3">
                 <Form.Label>Fecha Término</Form.Label>
@@ -731,7 +794,7 @@ const handleEditProject = (project) => {
                   required
                 />
               </Form.Group>
-  
+
               {/* Campo de estado */}
               <Form.Group className="mb-3">
                 <Form.Label>Estado</Form.Label>
@@ -750,7 +813,7 @@ const handleEditProject = (project) => {
                   <option value="Completado">Completado</option>
                 </Form.Control>
               </Form.Group>
-  
+
               {/* Campo de inversión */}
               <Form.Group className="mb-3">
                 <Form.Label>Inversión</Form.Label>
@@ -785,14 +848,13 @@ const handleEditProject = (project) => {
           </Button>
         </Modal.Footer>
       </Modal>
-  
+
       {/* Pie de página con logo */}
       <footer className="mt-4 footer-img-container">
         <img src="/logo.png" alt="Footer Logo" className="footer-img" />
       </footer>
     </div>
   );
-  
 };
 
 export default Proyectos;

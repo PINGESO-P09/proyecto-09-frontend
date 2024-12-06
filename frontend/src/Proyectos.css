@@ -1,231 +1,250 @@
-/* Sidebar styling */
-.sidebar {
-    height: 100vh;
-    background-color: #1a1a2e;
-    transition: all 0.3s ease-in-out;
+/* Proyectos.css */
+
+/* Resetear márgenes y paddings del body y html */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Contenedor principal para ocupar toda la pantalla y permitir scroll */
+  .proyectos-app {
     padding: 20px;
-    overflow-y: auto;
-}
-
-.sidebar .navbar-brand {
-    font-size: 24px;
-    font-weight: bold;
-    color: #e94560;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.sidebar .nav-link {
-    color: #fff;
-    font-size: 16px;
-    padding: 10px 20px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    transition: background 0.3s, color 0.3s;
-    display: flex;
-    align-items: center;
-}
-
-.sidebar .nav-link:hover {
-    background-color: #e94560;
-    color: #fff;
-}
-
-.sidebar .nav-link i {
-    margin-right: 10px;
-    font-size: 18px;
-}
-
-/* Sidebar hidden */
-.sidebar-hidden {
-    width: 0;
-    overflow: hidden;
-}
-
-/* Main content adjustment when sidebar is hidden */
-.main-content {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease-in-out;
-    padding: 20px;
-}
-
-/* Header styling */
-h1 {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1a1a2e;
-}
-
-/* Proyectos controls styling */
-.proyectos-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.search-input {
-    max-width: 300px;
-    border-radius: 20px;
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-}
-
-/* Table styling for Proyectos */
-.table {
-    margin-top: 20px;
-}
-
-.table thead th {
-    background-color: #1a1a2e;
-    color: white;
-    font-size: 14px;
-    text-align: center;
-}
-
-.table tbody tr:hover {
-    background-color: #f2f2f2;
-}
-
-.table tbody td {
-    text-align: center;
-}
-
-/* Scrollable table body */
-.table-scroll {
-    max-height: 300px;
-    overflow-y: auto;
-    padding-right: 10px;
-}
-
-/* Action buttons */
-button, .btn-outline-secondary {
-    font-size: 14px;
-}
-
-/* Dropdown */
-.dropdown-toggle::after {
-    display: none;
-}
-
-.dropdown-menu {
-    position: absolute;
-    z-index: 1050;
-    right: 0;
-}
-
-/* Notification bell styling */
-.notification-icon {
-    font-size: 24px;
-    cursor: pointer;
-}
-
-/* Action dropdown item */
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 14px;
-    padding: 8px 15px;
-}
-
-.dropdown-item:hover {
-    background-color: #f8f9fa;
-    color: #1a1a2e;
-}
-
-/* Pagination and rows per page selector */
-.pagination {
-    display: flex;
-    align-items: center;
-}
-
-.pagination .page-item .page-link {
-    color: #1a1a2e;
-    border: none;
-}
-
-.pagination .page-item.active .page-link {
-    background-color: #1a1a2e;
-    color: white;
-    border-radius: 50%;
-}
-
-.pagination .page-link:hover {
-    background-color: #e94560;
-    color: #fff;
-}
-
-.form-label, .form-control {
-    display: inline-block;
-    margin-right: 10px;
-}
-
-/* Styling for Document Table */
-.document-table-header {
-    margin-top: 30px;
-    font-size: 20px;
-    font-weight: bold;
-    color: #1a1a2e;
-}
-
-.document-table thead th {
-    background-color: #1a1a2e;
-    color: white;
-    font-size: 14px;
-}
-
-.document-table tbody tr:hover {
-    background-color: #f2f2f2;
-}
-
-.document-table tbody td {
-    text-align: center;
-}
-
-/* Modal Styling */
-.modal-header, .modal-footer {
-    background-color: #f8f9fa;
-}
-
-.modal-header .modal-title {
-    color: #1a1a2e;
-    font-weight: bold;
-}
-
-.modal-footer .btn-primary {
-    background-color: #1a1a2e;
-    border: none;
-}
-
-/* Footer logo container */
-.footer-img-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     width: 100%;
-    margin-top: 40px;
-    padding: 20px 0;
-    background-color: #f8f9fa;
-}
-
-/* Footer logo image styling */
-.footer-img {
-    max-width: 100%;
-    height: auto;
-    max-height: 150px;
-    object-fit: contain;
-}
-
-/* Header styling - centrado */
-h1 {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1a1a2e;
-    text-align: center; /* Centra horizontalmente el título */
-    margin: 0 auto 20px auto; /* Ajusta el espacio superior e inferior */
-    width: 100%; /* Asegura que ocupe el ancho completo */
-}
+    height: 100vh; /* Ocupa el alto completo de la ventana */
+    overflow-y: auto; /* Permite el scroll vertical */
+    box-sizing: border-box;
+  }
+  
+  /* Eliminar max-width y margin auto para que el contenido ocupe todo el ancho */
+  .proyectos-app {
+    max-width: none; /* Elimina la restricción de ancho */
+    margin: 0; /* Elimina el centrado */
+  }
+  
+  /* Ajustes para asegurarse de que los elementos internos también sean responsivos */
+  
+  /* Sidebar styling */
+  .sidebar {
+      height: 100vh;
+      background-color: #1a1a2e;
+      transition: all 0.3s ease-in-out;
+      padding: 20px;
+      overflow-y: auto;
+  }
+  
+  .sidebar .navbar-brand {
+      font-size: 24px;
+      font-weight: bold;
+      color: #e94560;
+      text-align: center;
+      margin-bottom: 20px;
+  }
+  
+  .sidebar .nav-link {
+      color: #fff;
+      font-size: 16px;
+      padding: 10px 20px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      transition: background 0.3s, color 0.3s;
+      display: flex;
+      align-items: center;
+  }
+  
+  .sidebar .nav-link:hover {
+      background-color: #e94560;
+      color: #fff;
+  }
+  
+  .sidebar .nav-link i {
+      margin-right: 10px;
+      font-size: 18px;
+  }
+  
+  /* Sidebar hidden */
+  .sidebar-hidden {
+      width: 0;
+      overflow: hidden;
+  }
+  
+  /* Main content adjustment when sidebar is hidden */
+  .main-content {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease-in-out;
+      padding: 20px;
+  }
+  
+  /* Header styling */
+  h1 {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1a1a2e;
+      text-align: left; /* Cambiado de center a left */
+      margin: 0 0 20px 0; /* Ajusta el espacio superior e inferior */
+      width: 100%; /* Asegura que ocupe el ancho completo */
+  }
+  
+  /* Proyectos controls styling */
+  .proyectos-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+  }
+  
+  .search-input {
+      max-width: 300px;
+      border-radius: 20px;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+  }
+  
+  /* Table styling for Proyectos */
+  .table {
+      margin-top: 20px;
+  }
+  
+  .table thead th {
+      background-color: #1a1a2e;
+      color: white;
+      font-size: 14px;
+      text-align: center;
+  }
+  
+  .table tbody tr:hover {
+      background-color: #f2f2f2;
+  }
+  
+  .table tbody td {
+      text-align: center;
+  }
+  
+  /* Scrollable table body */
+  .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+  }
+  
+  /* Action buttons */
+  button, .btn-outline-secondary {
+      font-size: 14px;
+  }
+  
+  /* Dropdown */
+  .dropdown-toggle::after {
+      display: none;
+  }
+  
+  .dropdown-menu {
+      position: absolute;
+      z-index: 1050;
+      right: 0;
+  }
+  
+  /* Notification bell styling */
+  .notification-icon {
+      font-size: 24px;
+      cursor: pointer;
+  }
+  
+  /* Action dropdown item */
+  .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
+      padding: 8px 15px;
+  }
+  
+  .dropdown-item:hover {
+      background-color: #f8f9fa;
+      color: #1a1a2e;
+  }
+  
+  /* Pagination and rows per page selector */
+  .pagination {
+      display: flex;
+      align-items: center;
+  }
+  
+  .pagination .page-item .page-link {
+      color: #1a1a2e;
+      border: none;
+  }
+  
+  .pagination .page-item.active .page-link {
+      background-color: #1a1a2e;
+      color: white;
+      border-radius: 50%;
+  }
+  
+  .pagination .page-link:hover {
+      background-color: #e94560;
+      color: #fff;
+  }
+  
+  .form-label, .form-control {
+      display: inline-block;
+      margin-right: 10px;
+  }
+  
+  /* Styling for Document Table */
+  .document-table-header {
+      margin-top: 30px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #1a1a2e;
+  }
+  
+  .document-table thead th {
+      background-color: #1a1a2e;
+      color: white;
+      font-size: 14px;
+  }
+  
+  .document-table tbody tr:hover {
+      background-color: #f2f2f2;
+  }
+  
+  .document-table tbody td {
+      text-align: center;
+  }
+  
+  /* Modal Styling */
+  .modal-header, .modal-footer {
+      background-color: #f8f9fa;
+  }
+  
+  .modal-header .modal-title {
+      color: #1a1a2e;
+      font-weight: bold;
+  }
+  
+  .modal-footer .btn-primary {
+      background-color: #1a1a2e;
+      border: none;
+  }
+  
+  /* Footer logo container */
+  .footer-img-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-top: 40px;
+      padding: 20px 0;
+      background-color: #f8f9fa;
+  }
+  
+  /* Footer logo image styling */
+  .footer-img {
+      max-width: 100%;
+      height: auto;
+      max-height: 150px;
+      object-fit: contain;
+  }
+  
