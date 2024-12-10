@@ -1,3 +1,5 @@
+// Documentos.js
+
 import React, { useState, useEffect, useCallback } from 'react';
 import './Documentos.css';
 import {
@@ -8,7 +10,8 @@ import {
   Form,
   Dropdown,
   Modal,
-  Alert
+  Alert,
+  Spinner
 } from 'react-bootstrap';
 import { 
   FaUpload, 
@@ -27,11 +30,8 @@ const axiosInstance = axios.create({
 });
 
 const Documentos = () => {
-  // Estado para documentos
-  const [documents, setDocuments] = useState([
-    { folder: 'Cerrados', doc: 'Informe Dimensiones', client: 'ACME', date: '2022-01-23', type: 'Informe' },
-    // ... otros documentos
-  ]);
+  // Estado para documentos, inicializado como arreglo vacío
+  const [documents, setDocuments] = useState([]);
 
   // Estados para búsqueda y ordenación
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,98 +49,221 @@ const Documentos = () => {
   // Estados para modales
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [showUploadDocumentModal, setShowUploadDocumentModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Estados para gestionar carpetas y proyectos
   const [newFolderName, setNewFolderName] = useState('');
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState('');
   const [foldersForSelectedProject, setFoldersForSelectedProject] = useState([]);
-  const [carpetas, setCarpetas] = useState([]);
+  const [projects, setProjects] = useState([]);
 
-  // Estado para proyectos
-  const [proyectos, setProyectos] = useState([]);
+  // Estado para manejar el archivo a eliminar
+  const [fileToDelete, setFileToDelete] = useState(null);
 
   // Estados para mensajes de éxito/error
   const [message, setMessage] = useState('');
   const [showMessage, setShowMessage] = useState(false);
   const [messageVariant, setMessageVariant] = useState('success'); // 'success', 'info' o 'danger'
 
-  // Fetch de proyectos desde la API
+  /**
+   * Función para formatear fechas de manera segura
+   * @param {string} dateString - La cadena de fecha a formatear.
+   * @returns {string} - Fecha formateada o mensaje de error.
+   */
+  const formatDate = (dateString) => {
+    if (!dateString) return "Sin fecha";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Fecha Inválida";
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses empiezan en 0
+    const year = date.getFullYear();
+    
+    return `${day}-${month}-${year}`;
+  };
+
+  /**
+   * useEffect para obtener la lista de proyectos desde el backend cuando el componente se monta.
+   */
   useEffect(() => {
     const fetchProjectTitles = async () => {
       try {
-        const response = await axiosInstance.get('/api/projects/titles/');
+        const response = await axiosInstance.get('/api/projects/titles/', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem("accessToken")}`, // Asume que el token está almacenado en localStorage
+          }
+        });
         console.log('Proyectos obtenidos:', response.data); // Depuración
-        setProyectos(response.data);
+        setProjects(response.data);
       } catch (error) {
-        console.error("Error al obtener los proyectos:", error);
+        console.error("Error al obtener los proyectos:", error.response || error.message);
         setMessage("Error al obtener los proyectos.");
         setMessageVariant('danger');
         setShowMessage(true);
-        setTimeout(() => setShowMessage(false), 3000);
+        setTimeout(() => setShowMessage(false), 5000);
       }
     };
     fetchProjectTitles();
   }, []);
 
-  // Fetch de documentos desde la API
+  /**
+   * useEffect para obtener la lista de documentos desde el backend cuando el componente se monta.
+   */
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
-        const response = await axiosInstance.get('/api/api_file/');
-        setDocuments(response.data);
+        const response = await axiosInstance.get('/api/api_file/', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
+          }
+        });
+        console.log("Respuesta de /api/api_file/:", response.data); // Depuración
+        // Verificar si response.data.results es un arreglo
+        if (Array.isArray(response.data.results)) {
+          setDocuments(response.data.results);
+        } else {
+          console.error("Formato de respuesta inesperado:", response.data);
+          setMessage("Formato de datos de documentos no válido.");
+          setMessageVariant('danger');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 5000);
+        }
       } catch (error) {
-        console.error("Error al obtener los documentos:", error);
+        console.error("Error al obtener los documentos:", error.response || error.message);
         setMessage("Error al obtener los documentos.");
         setMessageVariant('danger');
         setShowMessage(true);
-        setTimeout(() => setShowMessage(false), 3000);
+        setTimeout(() => setShowMessage(false), 5000);
       }
     };
     fetchDocuments();
   }, []);
 
-  // Fetch de carpetas cuando se selecciona un proyecto
+  /**
+   * useEffect para obtener las carpetas asociadas al proyecto seleccionado.
+   */
   useEffect(() => {
     const fetchFolders = async () => {
       if (selectedProject && selectedProject.id) {
         try {
-          const response = await axiosInstance.get(`/api/proyectos/${selectedProject.id}/carpetas/`);
+          const response = await axiosInstance.get(`/api/proyectos/${selectedProject.id}/carpetas/`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
+            }
+          });
           console.log('Carpetas obtenidas:', response.data); // Depuración
           setFoldersForSelectedProject(response.data);
           if (response.data.length === 0) {
             setMessage("No hay carpetas para este proyecto.");
             setMessageVariant('info');
             setShowMessage(true);
-            setTimeout(() => setShowMessage(false), 3000);
+            setTimeout(() => setShowMessage(false), 5000);
           }
         } catch (error) {
-          console.error('Error al obtener carpetas:', error);
+          console.error('Error al obtener carpetas:', error.response || error.message);
           setMessage("Error al obtener las carpetas del proyecto seleccionado.");
           setMessageVariant('danger');
           setShowMessage(true);
-          setTimeout(() => setShowMessage(false), 3000);
+          setTimeout(() => setShowMessage(false), 5000);
         }
       } else {
         setFoldersForSelectedProject([]);
       }
     };
     fetchFolders();
-  }, [selectedProject]); // Solo depende de selectedProject
+  }, [selectedProject]);
 
-  // Manejar cambio de proyecto
+  /**
+   * Función para manejar la selección de proyecto
+   */
   const handleProjectChange = (event) => {
     const projectId = event.target.value;
-    const selected = proyectos.find(proyecto => proyecto.id === parseInt(projectId));
+    const selected = projects.find(proyecto => proyecto.id === parseInt(projectId));
     setSelectedProject(selected || null);
     setSelectedFolder(''); // Resetear carpeta seleccionada al cambiar de proyecto
     console.log('Proyecto seleccionado:', selected); // Depuración
   };
 
-  // Manejar cambio de carpeta
+  /**
+   * Función para manejar la selección de carpeta
+   */
   const handleFolderChange = (e) => {
     setSelectedFolder(e.target.value);
   };
 
-  // Manejar subida de archivos con react-dropzone
+  /**
+   * Función para manejar búsqueda
+   */
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  /**
+   * Función para filtrar documentos según la búsqueda
+   */
+  const filteredDocuments = Array.isArray(documents) ? documents.filter((doc) =>
+    doc.name && doc.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
+
+  /**
+   * Función para manejar la descarga de un documento
+   */
+  const handleDownload = (doc) => {
+    if (doc.web_view_link) {
+      window.open(doc.web_view_link, '_blank');
+    } else {
+      setMessage("No se encontró el enlace para descargar el archivo.");
+      setMessageVariant('danger');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 5000);
+    }
+  };
+
+  /**
+   * Función para abrir el modal de eliminación
+   */
+  const handleDeleteClick = (doc) => {
+    setFileToDelete(doc);
+    setShowDeleteModal(true);
+  };
+
+  /**
+   * Función para confirmar la eliminación de un documento
+   */
+  const confirmDelete = async () => {
+    if (!fileToDelete) return;
+
+    try {
+      await axiosInstance.delete(`/api/api_file/${fileToDelete.id}/`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
+        }
+      });
+      setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== fileToDelete.id));
+      setMessage("Archivo eliminado con éxito.");
+      setMessageVariant('success');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 5000);
+    } catch (error) {
+      console.error("Error al eliminar el archivo:", error.response || error.message);
+      setMessage("Error al eliminar el archivo.");
+      setMessageVariant('danger');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 5000);
+    } finally {
+      setShowDeleteModal(false);
+      setFileToDelete(null);
+    }
+  };
+
+  /**
+   * Función para manejar la subida de archivos con react-dropzone
+   */
   const onDrop = useCallback((acceptedFiles) => {
     setUploadedFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
   }, []);
@@ -151,7 +274,9 @@ const Documentos = () => {
     multiple: true
   });
 
-  // Función para confirmar la subida de documentos
+  /**
+   * Función para confirmar la subida de documentos
+   */
   const handleConfirmUpload = async () => {
     // Verificar si hay carpeta seleccionada y archivos añadidos
     console.log(selectedFolder);
@@ -166,23 +291,31 @@ const Documentos = () => {
         });
 
         const response = await axiosInstance.post('/api/upload-drive-files/', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { 
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${localStorage.getItem("accessToken")}`, // Asegura que el token se envíe
+          },
         });
 
-        if (response.status === 200) {
+        if (response.status === 200 || response.status === 201) {
           setMessage('Archivo(s) subido(s) con éxito.');
           setMessageVariant('success');
           setShowMessage(true);
-          setTimeout(() => setShowMessage(false), 3000);
+          setTimeout(() => setShowMessage(false), 5000);
 
           // Actualizar el estado de documentos (asumiendo que response.data.uploaded_files contiene la info)
-          const newUploadedFiles = response.data.uploaded_files.map(file => ({
-            folder: selectedFolder,
-            doc: file.name,
-            client: 'Cliente X',
-            date: new Date().toISOString().split('T')[0],
-            type: 'Archivo', // Tipo genérico
-          }));
+          const newUploadedFiles = Array.isArray(response.data.uploaded_files) ? response.data.uploaded_files.map(file => ({
+            folder: {
+              folder_name: selectedFolder // Ajusta esto según la estructura real
+            },
+            name: file.name,
+            client: 'Cliente X', // Puedes ajustar esto según tus datos
+            created_at: file.created_at, // Usar el campo correcto de la API
+            // Remover el campo 'type' ya que ya no es relevante
+            id: file.id, // Asegúrate de que cada archivo tenga un id único
+            web_view_link: file.web_view_link || '', // Asegúrate de que exista este campo si es necesario
+          })) : [];
+
           setDocuments((prevDocs) => [...prevDocs, ...newUploadedFiles]);
 
           // Cerrar el modal y resetear estados
@@ -191,14 +324,14 @@ const Documentos = () => {
           setMessage('Error al subir el(los) archivo(s).');
           setMessageVariant('danger');
           setShowMessage(true);
-          setTimeout(() => setShowMessage(false), 3000);
+          setTimeout(() => setShowMessage(false), 5000);
         }
       } catch (error) {
         console.error("Error al subir el(los) archivo(s):", error.response ? error.response.data : error.message);
         setMessage(error.response?.data?.error || "Ocurrió un error al subir el(los) archivo(s).");
         setMessageVariant('danger');
         setShowMessage(true);
-        setTimeout(() => setShowMessage(false), 3000);
+        setTimeout(() => setShowMessage(false), 5000);
       } finally {
         setIsUploading(false); // Finalizar el proceso de subida
       }
@@ -208,106 +341,108 @@ const Documentos = () => {
     }
   };
 
-  // Ordenar alfabéticamente
+  /**
+   * Función para abrir el modal de subida de archivos
+   */
+  const handleUploadDocument = () => {
+    setShowUploadDocumentModal(true);
+    setUploadedFiles([]);
+    setSelectedProject(null);
+    setSelectedFolder('');
+  };
+
+  /**
+   * Función para cerrar el modal de subida de archivos
+   */
+  const closeUploadDocumentModal = () => {
+    setShowUploadDocumentModal(false);
+    setUploadedFiles([]);
+    setSelectedProject(null);
+    setSelectedFolder('');
+  };
+
+  /**
+   * Función para crear una nueva carpeta
+   */
+  const handleCreateFolder = async () => {
+    if (newFolderName && selectedProject) {
+      setIsCreatingFolder(true); // Iniciar el proceso de creación de carpeta
+      const projectName = projects.find((p) => p.id === parseInt(selectedProject.id))?.name || '';
+      const newFolder = `${projectName}/${newFolderName}`;
+
+      try {
+        // Realiza la solicitud al backend para crear la carpeta
+        const response = await axiosInstance.post('/api/create-folder/', {
+          folder_name: newFolder,
+          project_id: selectedProject.id, // Enviar el project_id correctamente
+        });
+
+        if (response.status === 201) {
+          setMessage(`Carpeta '${newFolder}' creada con éxito.`);
+          setMessageVariant('success');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 5000);
+
+          // Asumiendo que response.data es la nueva carpeta creada
+          setFoldersForSelectedProject([...foldersForSelectedProject, response.data]);
+
+          // Cerrar el modal y resetear estados
+          setShowCreateFolderModal(false);
+          setNewFolderName('');
+          setSelectedProject(null);
+        } else {
+          console.error("Error al crear la carpeta: ", response);
+          setMessage("Error al crear la carpeta.");
+          setMessageVariant('danger');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 5000);
+        }
+      } catch (error) {
+        console.error("Error al crear la carpeta:", error.response || error.message);
+        setMessage("Ocurrió un error al crear la carpeta. Verifica los detalles.");
+        setMessageVariant('danger');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 5000);
+      } finally {
+        setIsCreatingFolder(false); // Finalizar el proceso de creación de carpeta
+      }
+    } else {
+      setMessage('Selecciona un proyecto y escribe un nombre para la carpeta.');
+      setMessageVariant('danger');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 5000);
+    }
+  };
+
+  /**
+   * Función para ordenar alfabéticamente
+   */
   const handleSortAlphabetically = () => {
     const sortedDocuments = [...documents].sort((a, b) =>
       isSortedAlphabetically
-        ? b.doc.localeCompare(a.doc)
-        : a.doc.localeCompare(b.doc)
+        ? b.name.localeCompare(a.name)
+        : a.name.localeCompare(b.name)
     );
     setDocuments(sortedDocuments);
     setIsSortedAlphabetically(!isSortedAlphabetically);
     setIsSortedByDate(false);
   };
 
-  // Ordenar por fecha
+  /**
+   * Función para ordenar por fecha
+   */
   const handleSortByDate = () => {
     const sortedDocuments = [...documents].sort((a, b) =>
-      isSortedByDate ? new Date(a.date) - new Date(b.date) : new Date(b.date) - new Date(a.date)
+      isSortedByDate ? new Date(a.created_at) - new Date(b.created_at) : new Date(b.created_at) - new Date(a.created_at)
     );
     setDocuments(sortedDocuments);
     setIsSortedByDate(!isSortedByDate);
     setIsSortedAlphabetically(false);
   };
 
-  // Manejar búsqueda
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleUploadDocument = () => { // Eliminamos el parámetro docType
-    setShowUploadDocumentModal(true);
-    setSelectedProject(null);
-    setSelectedFolder('');
-    setUploadedFiles([]); // Reiniciar la lista al abrir el modal
-  };
-
-  // Cerrar modal de subir documento
-  const closeUploadDocumentModal = () => {
-    setUploadedFiles([]); // Vaciar la lista de archivos al cerrar el modal
-    setSelectedFolder('');
-    setSelectedProject(null);
-    setShowUploadDocumentModal(false);
-  };
-
-  const handleCreateFolder = async () => {
-    if (newFolderName && selectedProject) {
-      setIsCreatingFolder(true); // Iniciar el proceso de creación de carpeta
-      const projectName = proyectos.find((p) => p.id === parseInt(selectedProject.id))?.name || '';
-      const newFolder = `${projectName}/${newFolderName}`;
-
-      try {
-        // Realiza la solicitud al backend para crear la carpeta
-        const response = await axios.post('http://localhost:8000/api/create-folder/', {
-          folder_name: newFolder,
-          project_id: selectedProject.id, // Enviar el project_id correctamente
-        });
-
-        if (response.status === 201) {
-          alert(`Carpeta '${newFolder}' creada con éxito.`);
-
-          // Actualiza las carpetas y cierra el modal
-          setCarpetas([...carpetas, newFolder]);
-          setShowCreateFolderModal(false);
-          setNewFolderName('');
-          setSelectedProject(null);
-
-          // Mostrar el mensaje de éxito
-          setMessage('Carpeta creada con éxito.');
-          setMessageVariant('success');
-          setShowMessage(true);
-
-          // Ocultar el mensaje después de 3 segundos
-          setTimeout(() => setShowMessage(false), 3000);
-        } else {
-          console.error("Error al crear la carpeta: ", response);
-          setMessage("Error al crear la carpeta.");
-          setMessageVariant('danger');
-          setShowMessage(true);
-          setTimeout(() => setShowMessage(false), 3000);
-        }
-      } catch (error) {
-        console.error("Error al crear la carpeta:", error.response ? error.response.data : error.message);
-        setMessage("Ocurrió un error al crear la carpeta. Verifica los detalles.");
-        setMessageVariant('danger');
-        setShowMessage(true);
-        setTimeout(() => setShowMessage(false), 3000);
-      } finally {
-        setIsCreatingFolder(false); // Finalizar el proceso de creación de carpeta
-      }
-    } else {
-      alert('Selecciona un proyecto y escribe un nombre para la carpeta.');
-    }
-  };
-
-  // Filtrar documentos según búsqueda
-  const filteredDocuments = documents.filter((doc) =>
-    doc.doc.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="documentos-app d-flex">
-      <Col xs={12} className="main-content p-4">
+    <div className="documentos-app d-flex flex-column" style={{ height: '100vh', overflowY: 'auto' }}>
+      <Col xs={12} className="main-content p-4" style={{ flex: '1 0 auto' }}>
         {/* Mensajes de alerta */}
         {showMessage && (
           <Alert variant={messageVariant} onClose={() => setShowMessage(false)} dismissible>
@@ -317,27 +452,27 @@ const Documentos = () => {
 
         {/* Título */}
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h1 className="mb-0">Administración Documentos</h1>
+          <h1 className="mb-0">Administración de Documentos</h1>
         </div>
 
-        {/* Botones de Ordenación y Subida de Documentos */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
+        {/* Botones de Ordenación y Creación de Carpeta */}
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+          <div className="d-flex flex-wrap">
             <Button 
               variant="outline-secondary" 
-              className="me-2" 
+              className="me-2 mb-2" 
               onClick={handleSortAlphabetically}
             >
               Ordenar {isSortedAlphabetically ? 'Z-A' : 'A-Z'}
             </Button>
             <Button 
               variant="outline-secondary" 
-              className="me-2" 
+              className="me-2 mb-2" 
               onClick={handleSortByDate}
             >
               Ordenar por Fecha {isSortedByDate ? 'Ascendente' : 'Descendente'}
             </Button>
-            <Dropdown>
+            <Dropdown className="mb-2">
               <Dropdown.Toggle variant="secondary" id="dropdown-basic">
                 <FaUpload /> Subir archivo
               </Dropdown.Toggle>
@@ -350,6 +485,7 @@ const Documentos = () => {
             variant="outline-primary" 
             onClick={() => setShowCreateFolderModal(true)}
             disabled={isCreatingFolder} // Deshabilitar durante la creación de carpeta
+            className="mb-2"
           >
             <FaFolderPlus /> {isCreatingFolder ? 'Creando...' : 'Crear Carpeta'}
           </Button>
@@ -369,52 +505,55 @@ const Documentos = () => {
         {/* Tabla de Documentos */}
         <Card>
           <Card.Body>
-            <div className="table-scroll">
-              <Table responsive bordered>
-                <thead>
-                  <tr>
-                    <th>Nombre Carpeta</th>
-                    <th>Nombre Documento</th>
-                    <th>Cliente</th>
-                    <th>Fecha Subido</th>
-                    <th>Tipo</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredDocuments.map((doc, index) => (
-                    <tr key={index}>
-                      <td>{doc.folder}</td>
-                      <td>{doc.doc}</td>
+            <Table responsive bordered hover>
+              <thead>
+                <tr>
+                  <th>Nombre Carpeta</th>
+                  <th>Nombre Documento</th>
+                  <th>Cliente</th>
+                  <th>Fecha Subido</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDocuments.length > 0 ? (
+                  filteredDocuments.map((doc) => (
+                    <tr key={doc.id}>
+                      <td>{doc.folder ? doc.folder.folder_name : 'Sin carpeta'}</td>
+                      <td>{doc.name}</td>
                       <td>{doc.client}</td>
-                      <td>{doc.date}</td>
-                      <td>{doc.type}</td>
+                      <td>{formatDate(doc.created_at)}</td>
                       <td>
                         <Dropdown>
                           <Dropdown.Toggle variant="outline-secondary" size="sm">
                             <FaEllipsisH />
                           </Dropdown.Toggle>
                           <Dropdown.Menu>
-                            <Dropdown.Item href={`#download-${doc.id}`}>
+                            <Dropdown.Item onClick={() => handleDownload(doc)}>
                               <FaDownload /> Descargar
                             </Dropdown.Item>
-                            <Dropdown.Item href={`#open-${doc.id}`}>
+                            <Dropdown.Item href={doc.web_view_link} target="_blank" rel="noopener noreferrer">
                               <FaExternalLinkAlt /> Abrir
                             </Dropdown.Item>
-                            <Dropdown.Item href={`#rename-${doc.id}`}>
+                            {/* Puedes implementar la funcionalidad de renombrar según tus necesidades */}
+                            <Dropdown.Item onClick={() => {/* Implementa la función de renombrar */}}>
                               <FaPencilAlt /> Cambiar nombre
                             </Dropdown.Item>
-                            <Dropdown.Item href={`#delete-${doc.id}`} className="text-danger">
+                            <Dropdown.Item onClick={() => handleDeleteClick(doc)} className="text-danger">
                               <FaTrash /> Borrar
                             </Dropdown.Item>
                           </Dropdown.Menu>
                         </Dropdown>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center">No hay archivos disponibles.</td>
+                  </tr>
+                )}
+              </tbody>
+            </Table>
           </Card.Body>
         </Card>
 
@@ -430,6 +569,7 @@ const Documentos = () => {
                 type="text"
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="Ingresa el nombre de la carpeta"
               />
             </Form.Group>
             <Form.Group className="mt-3">
@@ -441,7 +581,7 @@ const Documentos = () => {
                 disabled={isCreatingFolder} // Deshabilitar mientras se crea la carpeta
               >
                 <option value="">Selecciona un proyecto</option>
-                {proyectos.map((proyecto) => (
+                {projects.map((proyecto) => (
                   <option key={proyecto.id} value={proyecto.id}>
                     {proyecto.name}
                   </option>
@@ -453,7 +593,7 @@ const Documentos = () => {
             <Button 
               variant="secondary" 
               onClick={() => setShowCreateFolderModal(false)}
-              disabled={isCreatingFolder} // Deshabilitar mientras se crea la carpeta
+              disabled={isCreatingFolder} // Deshabilitar durante la creación de carpeta
             >
               Cancelar
             </Button>
@@ -467,10 +607,10 @@ const Documentos = () => {
           </Modal.Footer>
         </Modal>
 
-        {/* Modal para Subir Archivo */}
+        {/* Modal para Subir Archivos */}
         <Modal show={showUploadDocumentModal} onHide={closeUploadDocumentModal}>
           <Modal.Header closeButton>
-            <Modal.Title>Subir Archivo</Modal.Title> {/* Título actualizado */}
+            <Modal.Title>Subir Archivo(s)</Modal.Title> {/* Título actualizado */}
           </Modal.Header>
           <Modal.Body>
             {/* Seleccionar Proyecto */}
@@ -478,12 +618,12 @@ const Documentos = () => {
               <Form.Label>Seleccionar Proyecto</Form.Label>
               <Form.Control 
                 as="select" 
-                value={selectedProject?.id || ''} 
+                value={selectedProject ? selectedProject.id : ''} 
                 onChange={handleProjectChange}
                 disabled={isUploading} // Deshabilitar mientras se sube
               >
                 <option value="">Seleccionar Proyecto</option>
-                {proyectos.map((proyecto) => (
+                {projects.map((proyecto) => (
                   <option key={proyecto.id} value={proyecto.id}>
                     {proyecto.name}
                   </option>
@@ -503,7 +643,7 @@ const Documentos = () => {
                 >
                   <option value="">Seleccionar Carpeta</option>
                   {foldersForSelectedProject.map((folder) => (
-                    <option key={folder.id} value={folder.folder_id}>
+                    <option key={folder.id} value={folder.id}>
                       {folder.folder_name}
                     </option>
                   ))}
@@ -511,17 +651,18 @@ const Documentos = () => {
               </Form.Group>
             )}
 
-            {/* Área de Subida de Archivo con react-dropzone */}
+            {/* Área de Subida de Archivos con react-dropzone */}
             <div
               {...getRootProps()}
+              className={`dropzone ${isDragActive ? 'active' : ''}`}
               style={{
-                border: '2px dashed #ccc',
+                border: '2px dashed #cccccc',
                 borderRadius: '5px',
                 padding: '20px',
                 textAlign: 'center',
-                marginTop: '20px',
                 cursor: 'pointer',
-                backgroundColor: isDragActive ? '#f0f8ff' : '#fafafa'
+                backgroundColor: isDragActive ? '#e6f7ff' : '#ffffff',
+                marginTop: '20px'
               }}
             >
               <input {...getInputProps()} />
@@ -558,7 +699,27 @@ const Documentos = () => {
               onClick={handleConfirmUpload}
               disabled={isUploading} // Deshabilitar durante la subida
             >
-              {isUploading ? 'Subiendo...' : 'Subir Archivo(s)'} {/* Cambiar el texto según el estado */}
+              {isUploading ? <Spinner animation="border" size="sm" /> : 'Subir Archivo(s)'}
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        {/* Modal para Confirmar Eliminación */}
+        <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Confirmar Eliminación</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {fileToDelete && (
+              <p>¿Estás seguro de que deseas eliminar el archivo <strong>{fileToDelete.name}</strong>?</p>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+              Cancelar
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Eliminar
             </Button>
           </Modal.Footer>
         </Modal>

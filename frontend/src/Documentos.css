@@ -7,8 +7,10 @@
     align-items: center;
     padding: 20px;
     width: 100%;
-    height: 100vh;
     background-color: #f8f9fa;
+    min-height: 100vh;
+    box-sizing: border-box;
+    /* overflow: hidden; */ /* Eliminado para permitir el scroll en la página */
 }
 
 /* Contenido principal */
@@ -20,9 +22,9 @@
     padding: 20px;
     width: 100%;
     margin: 20px 0;
-    flex-grow: 1;
-    overflow-y: auto;
-    border-radius: 8px;
+    box-sizing: border-box;
+    /* Flex-grow eliminado para permitir que el contenido crezca naturalmente */
+    /* overflow-y: auto; */ /* Eliminado para evitar scroll interno */
 }
 
 /* Footer con el logo */
@@ -33,6 +35,8 @@ footer.footer-img-container {
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 footer.footer-img-container .footer-img {
@@ -49,15 +53,18 @@ footer.footer-img-container .footer-img {
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     margin-top: 20px;
-    flex-grow: 1;
+    box-sizing: border-box;
+    /* flex-grow: 1; */ /* Eliminado para evitar restricciones de altura */
 }
 
+/* Estilo de los ítems de lista si se usan */
 .documentos-container .list-group-item {
     display: flex;
     justify-content: space-between;
     padding: 10px 15px;
 }
 
+/* Estilo de los botones dentro de documentos-container */
 .documentos-container button {
     font-size: 14px;
     padding: 6px 12px;
@@ -74,24 +81,20 @@ footer.footer-img-container .footer-img {
     border-color: #e94560;
 }
 
-/* Modal ajustes */
+/* Ajustes para los modales */
 .modal-content {
     width: 100%;
-    max-width: 600px; /* Aumentado para mayor tamaño de modal */
+    max-width: 600px; /* Tamaño máximo del modal */
     margin: 0 auto;
     border-radius: 8px;
-}
-
-/* Asegura que los contenedores internos no se desborden */
-.table-scroll {
-    max-height: 400px; /* Máxima altura del cuerpo de la tabla */
-    overflow-y: auto;  /* Habilita el scroll solo en este contenedor */
+    box-sizing: border-box;
 }
 
 /* Estilos generales de tabla */
 .table {
     margin-top: 20px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .table thead th {
@@ -99,6 +102,7 @@ footer.footer-img-container .footer-img {
     color: white;
     font-size: 14px;
     text-align: center;
+    padding: 10px;
 }
 
 .table tbody tr:hover {
@@ -107,6 +111,7 @@ footer.footer-img-container .footer-img {
 
 .table tbody td {
     text-align: center;
+    padding: 10px;
 }
 
 /* Estilo de los botones generales */
@@ -114,7 +119,7 @@ button, .btn-outline-secondary {
     font-size: 14px;
 }
 
-/* Dropdown */
+/* Estilos para Dropdowns */
 .dropdown-toggle::after {
     display: none;
 }
@@ -135,11 +140,14 @@ button, .btn-outline-secondary {
 .pagination {
     display: flex;
     align-items: center;
+    justify-content: center; /* Centrar la paginación */
+    margin-top: 20px;
 }
 
 .pagination .page-item .page-link {
     color: #1a1a2e;
     border: none;
+    padding: 8px 12px;
 }
 
 .pagination .page-item.active .page-link {
@@ -153,7 +161,7 @@ button, .btn-outline-secondary {
     color: #fff;
 }
 
-/* Ajustes para pantallas más pequeñas */
+/* Responsividad para pantallas medianas */
 @media (max-width: 768px) {
     .documentos-app {
         padding: 10px;
@@ -171,9 +179,9 @@ button, .btn-outline-secondary {
         max-height: 100px;
     }
 
-    .table-scroll {
+    /* .table-scroll {
         max-height: 250px;
-    }
+    } */ /* Eliminado */
 
     .table thead th, .table tbody td {
         font-size: 12px;
@@ -184,6 +192,7 @@ button, .btn-outline-secondary {
     }
 }
 
+/* Responsividad para pantallas pequeñas */
 @media (max-width: 576px) {
     .documentos-app {
         padding: 5px;
@@ -193,9 +202,9 @@ button, .btn-outline-secondary {
         padding: 10px;
     }
 
-    .table-scroll {
+    /* .table-scroll {
         max-height: 200px;
-    }
+    } */ /* Eliminado */
 
     .footer-img {
         max-height: 80px;
@@ -203,5 +212,14 @@ button, .btn-outline-secondary {
 
     .modal-content {
         max-width: 95%;
+    }
+
+    .table thead th, .table tbody td {
+        font-size: 10px;
+        padding: 8px;
+    }
+
+    .dropdown-menu {
+        right: -50px; /* Ajusta según sea necesario para pantallas pequeñas */
     }
 }

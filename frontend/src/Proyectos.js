@@ -88,6 +88,7 @@ const Proyectos = () => {
 
   /**
    * useEffect para obtener las carpetas asociadas al proyecto seleccionado.
+   * Si no se selecciona ningún proyecto, obtiene todas las carpetas.
    */
   useEffect(() => {
     const fetchFolders = async () => {
@@ -107,7 +108,7 @@ const Proyectos = () => {
           url = `http://localhost:8000/api/proyectos/${selectedProject}/carpetas/`;
         } else {
           console.log("Obteniendo todas las carpetas de todos los proyectos.");
-          url = `http://localhost:8000/api/carpeta/`; // Asegúrate de que este endpoint exista
+          url = `http://localhost:8000/api/carpeta/`; // Asegúrate de que este endpoint exista y devuelva todas las carpetas
         }
 
         // Solicitud GET para obtener carpetas
@@ -120,10 +121,15 @@ const Proyectos = () => {
 
         console.log("Carpetas obtenidas:", response.data); // Log para depuración
 
+        // Añadir log para cada carpeta
+        response.data.forEach(folder => {
+          console.log(`Carpeta: ${folder.folder_name}, created_at: ${folder.created_at}`);
+        });
+
         setFolders(response.data); // Ajusta según la estructura de tu API
       } catch (error) {
         console.error("Error al obtener las carpetas:", error.response || error.message);
-        setError("No se pudieron obtener las carpetas. Revisa la consola para más detalles.");
+        //setError("No se pudieron obtener las carpetas. Revisa la consola para más detalles.");
       }
     };
 
@@ -348,7 +354,7 @@ const Proyectos = () => {
   const handleDeleteProject = async (projectId) => {
     if (window.confirm("¿Seguro que quieres eliminar este proyecto?")) {
       setLoading(true); // Muestra el indicador de carga
-  
+
       try {
         const accessToken = localStorage.getItem("accessToken");
         if (!accessToken) {
@@ -356,7 +362,7 @@ const Proyectos = () => {
           alert("No se encontró el token de acceso.");
           return;
         }
-  
+
         // Solicitud DELETE para eliminar proyecto
         const response = await axios.delete(`http://localhost:8000/api/projects/${projectId}/delete/`, {
           headers: {
@@ -364,7 +370,7 @@ const Proyectos = () => {
             'Authorization': `Bearer ${accessToken}`,
           }
         });
-  
+
         if (response.status === 204) {
           // Elimina el proyecto del estado
           setProyectos(prevProyectos => prevProyectos.filter(proj => proj.id !== projectId));
