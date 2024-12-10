@@ -192,7 +192,8 @@ const Documentos = () => {
    * Función para manejar la selección de carpeta
    */
   const handleFolderChange = (e) => {
-    setSelectedFolder(e.target.value);
+    const folderId = e.target.value;
+    setSelectedFolder(folderId);
   };
 
   /**
@@ -279,21 +280,29 @@ const Documentos = () => {
    */
   const handleConfirmUpload = async () => {
     // Verificar si hay carpeta seleccionada y archivos añadidos
-    console.log(selectedFolder);
-    console.log(uploadedFiles.length);
+    console.log('Carpeta Seleccionada:', selectedFolder);
+    console.log('Número de Archivos:', uploadedFiles.length);
+    
     if (selectedFolder && uploadedFiles.length > 0) {
       setIsUploading(true); // Iniciar el proceso de subida
       try {
         const formData = new FormData();
-        formData.append('folder_id', selectedFolder);
+        
+        // Añadir los archivos al FormData
         uploadedFiles.forEach(file => {
           formData.append('files', file);
         });
 
-        const response = await axiosInstance.post('/api/upload-drive-files/', formData, {
+        // Añadir folder_id en el cuerpo de la solicitud
+        formData.append('folder_id', selectedFolder);
+
+        // Construir la URL correctamente
+        const uploadUrl = `/api/upload-drive-files/`;
+
+        const response = await axiosInstance.post(uploadUrl, formData, {
           headers: { 
             'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${localStorage.getItem("accessToken")}`, // Asegura que el token se envíe
+            'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
           },
         });
 
@@ -303,17 +312,16 @@ const Documentos = () => {
           setShowMessage(true);
           setTimeout(() => setShowMessage(false), 5000);
 
-          // Actualizar el estado de documentos (asumiendo que response.data.uploaded_files contiene la info)
+          // Actualizar el estado de documentos
           const newUploadedFiles = Array.isArray(response.data.uploaded_files) ? response.data.uploaded_files.map(file => ({
             folder: {
-              folder_name: selectedFolder // Ajusta esto según la estructura real
+              folder_name: foldersForSelectedProject.find(folder => folder.folder_id === selectedFolder)?.folder_name || 'Sin carpeta'
             },
             name: file.name,
-            client: 'Cliente X', // Puedes ajustar esto según tus datos
-            created_at: file.created_at, // Usar el campo correcto de la API
-            // Remover el campo 'type' ya que ya no es relevante
+            client: 'Cliente X', // Ajusta según tus datos
+            created_at: file.created_at, // Asegúrate de que este campo existe en la respuesta
             id: file.id, // Asegúrate de que cada archivo tenga un id único
-            web_view_link: file.web_view_link || '', // Asegúrate de que exista este campo si es necesario
+            web_view_link: file.web_view_link || '', // Asegúrate de que este campo existe si es necesario
           })) : [];
 
           setDocuments((prevDocs) => [...prevDocs, ...newUploadedFiles]);
@@ -643,7 +651,7 @@ const Documentos = () => {
                 >
                   <option value="">Seleccionar Carpeta</option>
                   {foldersForSelectedProject.map((folder) => (
-                    <option key={folder.id} value={folder.id}>
+                    <option key={folder.folder_id} value={folder.folder_id}>
                       {folder.folder_name}
                     </option>
                   ))}
