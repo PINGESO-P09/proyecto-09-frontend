@@ -25,6 +25,7 @@ import {
 import axios from 'axios';
 import { useDropzone } from 'react-dropzone'; // Importar useDropzone
 
+// Configuración de la instancia de Axios con la URL base
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:8000', // Asegúrate de que este sea el puerto correcto de tu backend
 });
@@ -239,12 +240,14 @@ const Documentos = () => {
     if (!fileToDelete) return;
 
     try {
-      await axiosInstance.delete(`/api/api_file/${fileToDelete.id}/`, {
+      // Realizar solicitud DELETE a la URL correcta
+      await axiosInstance.delete(`/api/delete-file/${fileToDelete.id}/`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem("accessToken")}`,
         }
       });
+      // Actualizar el estado de documentos eliminando el documento borrado
       setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== fileToDelete.id));
       setMessage("Archivo eliminado con éxito.");
       setMessageVariant('success');
@@ -252,7 +255,7 @@ const Documentos = () => {
       setTimeout(() => setShowMessage(false), 5000);
     } catch (error) {
       console.error("Error al eliminar el archivo:", error.response || error.message);
-      setMessage("Error al eliminar el archivo.");
+      setMessage(`Error al eliminar el archivo: ${error.response?.data?.message || error.message}`);
       setMessageVariant('danger');
       setShowMessage(true);
       setTimeout(() => setShowMessage(false), 5000);
@@ -297,7 +300,7 @@ const Documentos = () => {
         formData.append('folder_id', selectedFolder);
 
         // Construir la URL correctamente
-        const uploadUrl = `/api/upload-drive-files/`;
+        const uploadUrl = `/api/upload-drive-files/`; // Asegúrate de que este endpoint existe en tu backend
 
         const response = await axiosInstance.post(uploadUrl, formData, {
           headers: { 

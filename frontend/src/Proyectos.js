@@ -16,6 +16,7 @@ const Proyectos = () => {
   const [editingProject, setEditingProject] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // Modal de confirmación de eliminación
   
   // Estado para manejar el nuevo proyecto
   const [newProject, setNewProject] = useState({
@@ -35,6 +36,14 @@ const Proyectos = () => {
   // Estado para manejar el proyecto seleccionado
   const [selectedProject, setSelectedProject] = useState('');  // ID del proyecto
   const [selectedProjectName, setSelectedProjectName] = useState('');  // Nombre del proyecto
+
+  // Estados para manejar mensajes de éxito/error
+  const [message, setMessage] = useState('');
+  const [showMessage, setShowMessage] = useState(false);
+  const [messageVariant, setMessageVariant] = useState('success'); // 'success', 'info' o 'danger'
+
+  // Estado para manejar el proyecto a eliminar
+  const [projectToDelete, setProjectToDelete] = useState(null);
 
   /**
    * Función para formatear fechas de manera segura
@@ -228,11 +237,17 @@ const Proyectos = () => {
           console.log("Proyecto creado exitosamente. Actualizando estado de proyectos...");
           setProyectos([...proyectos, response.data.project]);
           setShowNewProjectModal(false);
-          alert("Proyecto creado con éxito.");
+          setMessage("Proyecto creado con éxito.");
+          setMessageVariant('success');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 5000);
           console.log("Estado de proyectos actualizado y modal cerrado.");
         } else {
           console.warn("La respuesta del backend no contiene 'project'. Verifica los datos enviados.");
-          alert("No se pudo guardar el proyecto. Verifica los datos.");
+          setMessage("No se pudo guardar el proyecto. Verifica los datos.");
+          setMessageVariant('danger');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 5000);
         }
       } catch (error) {
         console.error("Error al guardar el proyecto:", error.response || error.message);
@@ -242,7 +257,10 @@ const Proyectos = () => {
           console.log("Detalles del error del backend:", error.response.data);
         }
 
-        alert(`Error al guardar el proyecto: ${error.response?.data?.error || error.message}`);
+        setMessage(`Error al guardar el proyecto: ${error.response?.data?.error || error.message}`);
+        setMessageVariant('danger');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 5000);
       } finally {
         setLoading(false);
         console.log("Finalizado el proceso de creación del proyecto. Estado de carga:", loading);
@@ -280,7 +298,10 @@ const Proyectos = () => {
 
     if (!editingProject || !editingProject.id) {
       console.error("No se ha seleccionado un proyecto para editar.");
-      alert("No se ha seleccionado un proyecto válido para editar.");
+      setMessage("No se ha seleccionado un proyecto válido para editar.");
+      setMessageVariant('danger');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 5000);
       return;
     }
 
@@ -328,62 +349,98 @@ const Proyectos = () => {
             return updatedProyectos;
           });
           setShowEditModal(false);
-          alert("Proyecto actualizado exitosamente.");
+          setMessage("Proyecto actualizado exitosamente.");
+          setMessageVariant('success');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 5000);
           console.log("Estado de proyectos actualizado y modal cerrado.");
         } else {
           console.warn("La respuesta del backend no contiene datos actualizados.");
-          alert("No se pudo actualizar el proyecto. Verifica los datos.");
+          setMessage("No se pudo actualizar el proyecto. Verifica los datos.");
+          setMessageVariant('danger');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 5000);
         }
       } catch (error) {
         console.error("Error al actualizar el proyecto:", error.response || error.message);
         console.log("Detalles del error:", error);
-        alert(`Error al actualizar el proyecto: ${error.response?.data?.error || error.message}`);
+        setMessage(`Error al actualizar el proyecto: ${error.response?.data?.error || error.message}`);
+        setMessageVariant('danger');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 5000);
       } finally {
         setLoading(false);
         console.log("Finalizado el proceso de actualización del proyecto. Estado de carga:", loading);
       }
     } else {
       console.warn("Faltan campos obligatorios en la edición. No se puede guardar el proyecto.");
-      alert("Por favor, completa todos los campos obligatorios.");
+      setMessage("Por favor, completa todos los campos obligatorios.");
+      setMessageVariant('danger');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 5000);
     }
   };
 
   /**
    * Función para manejar la eliminación de un proyecto
    */
-  const handleDeleteProject = async (projectId) => {
-    if (window.confirm("¿Seguro que quieres eliminar este proyecto?")) {
-      setLoading(true); // Muestra el indicador de carga
+  const handleDeleteProject = (project) => {
+    setProjectToDelete(project);
+    setShowDeleteModal(true);
+  };
 
-      try {
-        const accessToken = localStorage.getItem("accessToken");
-        if (!accessToken) {
-          console.error("No se encontró el token de acceso.");
-          alert("No se encontró el token de acceso.");
-          return;
-        }
+  /**
+   * Función para confirmar la eliminación del proyecto
+   */
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
 
-        // Solicitud DELETE para eliminar proyecto
-        const response = await axios.delete(`http://localhost:8000/api/projects/${projectId}/delete/`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-          }
-        });
+    setLoading(true); // Muestra el indicador de carga
 
-        if (response.status === 204) {
-          // Elimina el proyecto del estado
-          setProyectos(prevProyectos => prevProyectos.filter(proj => proj.id !== projectId));
-          alert("Proyecto eliminado con éxito.");
-        } else {
-          alert("No se pudo eliminar el proyecto.");
-        }
-      } catch (error) {
-        console.error("Error al eliminar el proyecto:", error.response || error.message);
-        alert("Error al eliminar el proyecto.");
-      } finally {
-        setLoading(false);
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        console.error("No se encontró el token de acceso.");
+        setMessage("No se encontró el token de acceso.");
+        setMessageVariant('danger');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 5000);
+        return;
       }
+
+      // Solicitud DELETE para eliminar proyecto
+      const response = await axios.delete(`http://localhost:8000/api/delete-project/${projectToDelete.id}/`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        }
+      });
+
+      console.log("Respuesta del backend después de eliminar el proyecto:", response.data);
+
+      if (response.status === 200) {
+        // Elimina el proyecto del estado
+        setProyectos(prevProyectos => prevProyectos.filter(proj => proj.id !== projectToDelete.id));
+        setMessage("Proyecto eliminado con éxito.");
+        setMessageVariant('success');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 5000);
+      } else {
+        setMessage("No se pudo eliminar el proyecto.");
+        setMessageVariant('danger');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 5000);
+      }
+    } catch (error) {
+      console.error("Error al eliminar el proyecto:", error.response || error.message);
+      setMessage(`Error al eliminar el proyecto: ${error.response?.data?.message || error.message}`);
+      setMessageVariant('danger');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 5000);
+    } finally {
+      setLoading(false);
+      setShowDeleteModal(false);
+      setProjectToDelete(null);
     }
   };
 
@@ -405,32 +462,50 @@ const Proyectos = () => {
    */
   const handleDeleteFolder = async (folderId) => {
     if (window.confirm("¿Seguro que quieres eliminar esta carpeta?")) {
+      setLoading(true); // Muestra el indicador de carga
+
       try {
         const accessToken = localStorage.getItem("accessToken");
         if (!accessToken) {
           console.error("No se encontró el token de acceso.");
-          setError("No se encontró el token de acceso. Por favor, inicia sesión nuevamente.");
+          setMessage("No se encontró el token de acceso. Por favor, inicia sesión nuevamente.");
+          setMessageVariant('danger');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 5000);
           return;
         }
 
         // Solicitud DELETE para eliminar carpeta
-        const response = await axios.delete(`http://localhost:8000/api/carpeta/${folderId}/`, {
+        const response = await axios.delete(`http://localhost:8000/api/delete-folder/${folderId}/`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`,
           }
         });
 
-        if (response.status === 204) {
+        console.log("Respuesta del backend después de eliminar la carpeta:", response.data);
+
+        if (response.status === 200) {
           // Elimina la carpeta del estado
           setFolders(prevFolders => prevFolders.filter(folder => folder.id !== folderId));
-          alert("Carpeta eliminada con éxito.");
+          setMessage("Carpeta eliminada con éxito.");
+          setMessageVariant('success');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 5000);
         } else {
-          alert("No se pudo eliminar la carpeta.");
+          setMessage("No se pudo eliminar la carpeta.");
+          setMessageVariant('danger');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 5000);
         }
       } catch (error) {
         console.error("Error al eliminar la carpeta:", error.response || error.message);
-        alert("Error al eliminar la carpeta.");
+        setMessage(`Error al eliminar la carpeta: ${error.response?.data?.message || error.message}`);
+        setMessageVariant('danger');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 5000);
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -444,6 +519,13 @@ const Proyectos = () => {
           Nuevo Proyecto
         </Button>
       </div>
+
+      {/* Mostrar mensaje de alerta si existe */}
+      {showMessage && (
+        <Alert variant={messageVariant} onClose={() => setShowMessage(false)} dismissible>
+          {message}
+        </Alert>
+      )}
 
       {/* Mostrar mensaje de error si existe */}
       {error && (
@@ -510,7 +592,7 @@ const Proyectos = () => {
                       <Button 
                         variant="danger" 
                         size="sm" 
-                        onClick={() => handleDeleteProject(proyecto.id)}
+                        onClick={() => handleDeleteProject(proyecto)}
                       >
                         <FaTrash /> Eliminar
                       </Button>
@@ -851,6 +933,26 @@ const Proyectos = () => {
           {/* Botón para guardar los cambios en el proyecto */}
           <Button variant="primary" onClick={handleSaveProject}>
             Guardar Cambios
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal de confirmación para eliminar proyecto */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmar Eliminación</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {projectToDelete && (
+            <p>¿Estás seguro de que deseas eliminar el proyecto <strong>{projectToDelete.titulo}</strong>?</p>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={confirmDeleteProject} disabled={loading}>
+            {loading ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Eliminar'}
           </Button>
         </Modal.Footer>
       </Modal>
